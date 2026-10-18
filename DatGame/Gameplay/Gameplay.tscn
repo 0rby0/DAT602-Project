@@ -189,7 +189,6 @@ layout_mode = 2
 size_flags_vertical = 8
 
 [node name="Chat Window" parent="." unique_id=230172480 instance=ExtResource("7_2gist")]
-visible = false
 
 [node name="Glitch Movement" type="Timer" parent="." unique_id=131963950]
 autostart = true

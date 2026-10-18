@@ -2,11 +2,22 @@ DROP DATABASE IF EXISTS gamedb;
 CREATE DATABASE gamedb;
 USE gamedb;
 
+SET AUTOCOMMIT = 0;
+
 DELIMITER //
 
 -- Generate the database
 CREATE PROCEDURE Generate_Database()
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'DDL procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+	
 	CREATE TABLE `account` (
 		AccountName VARCHAR(32),
 		`Password` VARCHAR(32) NOT NULL,
@@ -24,9 +35,9 @@ BEGIN
 		CONSTRAINT fk_account_room
 			FOREIGN KEY (AccountName)
 			REFERENCES `account`(AccountName)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
-    
+	
 	CREATE TABLE ability (
 		AbilityName VARCHAR(24),
 		`Description` VARCHAR(255) NOT NULL,
@@ -42,74 +53,74 @@ BEGIN
 	CREATE TABLE abilityinstance (
 		AbilityID INT AUTO_INCREMENT,
 		AbilityName VARCHAR(24) NOT NULL,
-        PRIMARY KEY (AbilityID),
-        CONSTRAINT fk_abilityinstance_ability
+		PRIMARY KEY (AbilityID),
+		CONSTRAINT fk_abilityinstance_ability
 			FOREIGN KEY (AbilityName)
-            REFERENCES ability(AbilityName)
-            ON DELETE CASCADE
-    );
-    
-    CREATE TABLE class (
+			REFERENCES ability(AbilityName)
+			ON DELETE CASCADE
+	);
+	
+	CREATE TABLE class (
 		ClassName VARCHAR(32),
-        AbilityName VARCHAR(24),
+		AbilityName VARCHAR(24),
 		Sprite VARCHAR(32) NOT NULL,
-        PRIMARY KEY (ClassName),
-        CONSTRAINT fk_class_ability
+		PRIMARY KEY (ClassName),
+		CONSTRAINT fk_class_ability
 			FOREIGN KEY (AbilityName)
-            REFERENCES ability(AbilityName)
-            ON DELETE CASCADE
-    );
-    
+			REFERENCES ability(AbilityName)
+			ON DELETE CASCADE
+	);
+	
 	CREATE TABLE stat (
 		StatName VARCHAR(16),
 		`MaxValue` INT NOT NULL,
 		PRIMARY KEY (StatName)
 	);
-    
-    CREATE TABLE class_stat(
+	
+	CREATE TABLE class_stat(
 		ClassName VARCHAR(32),
-        StatName VARCHAR(16) NOT NULL,
-        Amount INT NOT NULL,
-        PRIMARY KEY (ClassName, StatName),
-        CONSTRAINT fk_class_stat_class
+		StatName VARCHAR(16) NOT NULL,
+		Amount INT NOT NULL,
+		PRIMARY KEY (ClassName, StatName),
+		CONSTRAINT fk_class_stat_class
 			FOREIGN KEY (ClassName)
-            REFERENCES class(ClassName)
-            ON DELETE CASCADE,
-        CONSTRAINT fk_class_stat_stat
+			REFERENCES class(ClassName)
+			ON DELETE CASCADE,
+		CONSTRAINT fk_class_stat_stat
 			FOREIGN KEY (StatName)
-            REFERENCES stat(StatName)
-            ON DELETE CASCADE
-    );
-    
+			REFERENCES stat(StatName)
+			ON DELETE CASCADE
+	);
+	
 	CREATE TABLE player (
 		PlayerID INT AUTO_INCREMENT,
-        `Active` BIT DEFAULT 1 NOT NULL,
+		`Active` BIT DEFAULT 1 NOT NULL,
 		CurrentScore INT NOT NULL DEFAULT 0,
 		HighScore INT NOT NULL DEFAULT 0,
 		CurrentEnergy INT NOT NULL,
 		CurrentHealth INT NOT NULL,
 		AccountName VARCHAR(32) NOT NULL,
 		RoomID INT NOT NULL,
-        Combatant INT UNIQUE,
-        ClassName VARCHAR(32) NOT NULL,
-        BattleScore INT NOT NULL DEFAULT 0,
+		Combatant INT UNIQUE,
+		ClassName VARCHAR(32) NOT NULL,
+		BattleScore INT NOT NULL DEFAULT 0,
 		PRIMARY KEY (PlayerID),
 		CONSTRAINT fk_player_account
 			FOREIGN KEY (AccountName)
 			REFERENCES `account`(AccountName)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_player_room
 			FOREIGN KEY (RoomID)
 			REFERENCES room(RoomID)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_player_player
 			FOREIGN KEY (Combatant)
-            REFERENCES player(PlayerID)
-            ON DELETE CASCADE,
+			REFERENCES player(PlayerID)
+			ON DELETE CASCADE,
 		CONSTRAINT fk_player_class
 			FOREIGN KEY (ClassName)
-            REFERENCES class(ClassName)
-            ON DELETE CASCADE
+			REFERENCES class(ClassName)
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE tile (
@@ -121,7 +132,7 @@ BEGIN
 		CONSTRAINT fk_tile_room
 			FOREIGN KEY (RoomID)
 			REFERENCES room(RoomID)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE message (
@@ -132,7 +143,7 @@ BEGIN
 		CONSTRAINT fk_message_player
 			FOREIGN KEY (PlayerID)
 			REFERENCES player(PlayerID)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE statchange (
@@ -143,11 +154,11 @@ BEGIN
 		CONSTRAINT fk_statchange_ability
 			FOREIGN KEY (AbilityName)
 			REFERENCES ability(AbilityName)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_statchange_stat
 			FOREIGN KEY (StatName)
 			REFERENCES stat(StatName)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE player_stat (
@@ -158,11 +169,11 @@ BEGIN
 		CONSTRAINT fk_playerstat_player
 			FOREIGN KEY (PlayerID)
 			REFERENCES player(PlayerID)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_playerstat_stat
 			FOREIGN KEY (StatName)
 			REFERENCES stat(StatName)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE player_ability (
@@ -174,11 +185,11 @@ BEGIN
 		CONSTRAINT fk_playerability_abilityinstance
 			FOREIGN KEY (AbilityID)
 			REFERENCES abilityinstance(AbilityID)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_playerability_player
 			FOREIGN KEY (PlayerID)
 			REFERENCES player(PlayerID)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE player_tile (
@@ -190,38 +201,38 @@ BEGIN
 		CONSTRAINT fk_playertile_player
 			FOREIGN KEY (PlayerID)
 			REFERENCES player(PlayerID)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_playertile_tile
 			FOREIGN KEY (TileID)
 			REFERENCES tile(TileID)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
 
 	CREATE TABLE tile_ability (
 		Placed TIMESTAMP,
 		TileID INT,
 		AbilityID INT,
-        Removed TIMESTAMP,
+		Removed TIMESTAMP,
 		PRIMARY KEY (Placed, TileID, AbilityID),
 		CONSTRAINT fk_tileability_tile
 			FOREIGN KEY (TileID)
 			REFERENCES tile(TileID)
-            ON DELETE CASCADE,
+			ON DELETE CASCADE,
 		CONSTRAINT fk_tileability_abilityinstance
 			FOREIGN KEY (AbilityID)
 			REFERENCES abilityinstance(AbilityID)
-            ON DELETE CASCADE
+			ON DELETE CASCADE
 	);
-    
-    -- Creates the games statistics
-    INSERT INTO stat (StatName, `MaxValue`)
+	
+	-- Creates the games statistics
+	INSERT INTO stat (StatName, `MaxValue`)
 		VALUES ('Strength', 100),
 			   ('Speed', 100),
-               ('Energy', 100),
-               ('Health', 100);
-    
+			   ('Energy', 100),
+			   ('Health', 100);
+	
 	-- Create all of the games abilities
-    INSERT INTO ability (AbilityName, `Description`, `Value`, Cost, Damage, Sprite, Glitched, Combat)
+	INSERT INTO ability (AbilityName, `Description`, `Value`, Cost, Damage, Sprite, Glitched, Combat)
 		VALUES ('Iron Core', '+1 Health | -1 Speed\nA forged iron core to increase the durability of a suit.', 5, 0, 0, './Assets/IronCore.png', 0, 0),
 				('Steel Core', '+3 Health | -2 Speed\nA forged steel core to better increase the durability of a suit.', 10, 0, 0, './Assets/SteelCore.png', 0, 0),
 				('Platinum Core', '+5 Health | -3 Speed\nA forged platinum core to greatly increase the durability of a suit.', 15, 0, 0, './Assets/PlatinumCore.png', 0, 0),
@@ -245,43 +256,53 @@ BEGIN
 				('Double-Cell', '+4 Energy | -2 Strength\nTwo energy cells to store more energy for later use. Seem to bounce off of surfaces easily.', 6, 0, 0, './Assets/DoubleCell.png', 0, 0),
 				('Triple-Cell', '+6 Energy | -3 Strength\nThree energy cells to store a lot more energy for later use. Seem to bounce off of surfaces easily.', 12, 0, 0, './Assets/TripleCell.png', 0, 0),
 				('Quad-Cell', '+8 Energy | -5 Strength\nFour energy cells to store an overwhelming amount of energy for later use. Seem to bounce off of surfaces easily. One might question the diminishing returns of so many cells.', 24, 0, 0, './Assets/QuadCell.png', 0, 0);
-        
-    -- Create the games classes
-    INSERT INTO class (ClassName, AbilityName, Sprite)
+		
+	-- Create the games classes
+	INSERT INTO class (ClassName, AbilityName, Sprite)
 		VALUES ('Gorilla', 'Piston Wreck', 'Gorilla Token'),
 			   ('Eagle', 'Wing Swipe', 'Eagle Token'),
-               ('Cheetah', 'Hyper-Speed Kick', 'Cheetah Token'),
-               ('Tiger', 'Claw Strike', 'Tiger Token');
-    
-    -- Attaches the classes to statistics
+			   ('Cheetah', 'Hyper-Speed Kick', 'Cheetah Token'),
+			   ('Tiger', 'Claw Strike', 'Tiger Token');
+	
+	-- Attaches the classes to statistics
 	INSERT INTO class_stat (ClassName, StatName, Amount)
 		VALUE ('Gorilla', 'Health', 1),
 			  ('Gorilla', 'Strength', 1),
-              ('Gorilla', 'Energy', -1),
-              ('Gorilla', 'Speed', -1),
-              ('Eagle', 'Health', 1),
+			  ('Gorilla', 'Energy', -1),
+			  ('Gorilla', 'Speed', -1),
+			  ('Eagle', 'Health', 1),
 			  ('Eagle', 'Strength', -1),
-              ('Eagle', 'Energy', -1),
-              ('Eagle', 'Speed', 1),
-              ('Cheetah', 'Health', -1),
+			  ('Eagle', 'Energy', -1),
+			  ('Eagle', 'Speed', 1),
+			  ('Cheetah', 'Health', -1),
 			  ('Cheetah', 'Strength', -1),
-              ('Cheetah', 'Energy', 1),
-              ('Cheetah', 'Speed', 1),
-              ('Tiger', 'Health', -1),
+			  ('Cheetah', 'Energy', 1),
+			  ('Cheetah', 'Speed', 1),
+			  ('Tiger', 'Health', -1),
 			  ('Tiger', 'Strength', 1),
-              ('Tiger', 'Energy', 1),
-              ('Tiger', 'Speed', -1);
+			  ('Tiger', 'Energy', 1),
+			  ('Tiger', 'Speed', -1);
 	
-    -- Create an administrator account
-    INSERT INTO `account` (AccountName, `Password`, `Admin`)
+	-- Create an administrator account
+	INSERT INTO `account` (AccountName, `Password`, `Admin`)
 		VALUES ('admin', 'admin123', 1);
 
+	COMMIT;
+    
 END //
 
 -- Generate a set of test data
 CREATE PROCEDURE Create_Test_Data ()
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Testing failed' AS message;
+        ROLLBACK;
+	END;
+    
+    START TRANSACTION;
+    
     -- Tests registration
     -- Tests creating a new account
 	CALL Create_Account('V', 'V3nd3774');
@@ -324,6 +345,8 @@ BEGIN
     -- Tests killing a game
     CALL Kill_Room(1);
     
+    COMMIT;
+    
 END //
 
 -- Account login, including lock out
@@ -332,6 +355,14 @@ CREATE PROCEDURE Login(
 	IN In_Password VARCHAR(32)
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Login procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Redirect: If requested account name doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Username) THEN
@@ -362,8 +393,10 @@ BEGIN
 		WHERE AccountName = In_Username;
             
 		SELECT 'Login success' AS message;
+        COMMIT;
         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 	
 END//
 
@@ -373,6 +406,14 @@ CREATE PROCEDURE Create_Account (
 	IN IN_Password VARCHAR(32)
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Account creation procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested account name already exists
 	IF EXISTS (SELECT * FROM `account` WHERE AccountName = IN_Username) THEN
@@ -384,8 +425,10 @@ BEGIN
 			VALUES (IN_Username, IN_Password);
             
 		SELECT 'Account created successfully' AS message;
+        COMMIT;
         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
@@ -397,7 +440,15 @@ CREATE PROCEDURE Create_Room(
 BEGIN
 
 	DECLARE i INT DEFAULT 1;
-	
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Room creation procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+    
     -- Error: Requested room owner account name doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Player) THEN
 		SELECT 'Invalid account name' AS message;
@@ -425,7 +476,10 @@ BEGIN
             
         END LOOP item_loop;
         
+        COMMIT;
+        
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
@@ -439,6 +493,14 @@ BEGIN
 
     DECLARE tx INT DEFAULT 0;
     DECLARE ty INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Tile layout procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
     -- Error: If requested room doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
@@ -470,7 +532,11 @@ BEGIN
 			
 			LEAVE tileX;
 		END LOOP tileX;
+        
+        COMMIT;
+        
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -481,13 +547,21 @@ CREATE PROCEDURE Place_Ability_On_Tile(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Ability placement procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
     -- Error: If the given x/y doesn't exist in the given room
     IF NOT EXISTS (SELECT * FROM tile WHERE TileID = InTile) THEN
 		SELECT 'Tile does not exist' AS message;
     
     -- Error: If requested ability instance doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM ability WHERE AbilityName = InAbility) THEN
-			SELECT 'Ability does not exist' AS message;
+		SELECT 'Ability does not exist' AS message;
 	
     -- Create the item instance and put it on the tile
 	ELSE
@@ -496,7 +570,11 @@ BEGIN
 		
 		INSERT INTO Tile_Ability (Placed, TileID, AbilityID)
 			VALUES (CURRENT_TIMESTAMP(), InTile, (SELECT Get_Instance(InAbility)));
+            
+		COMMIT;
+        
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -507,6 +585,14 @@ CREATE PROCEDURE Join_Room(
     IN Class VARCHAR(32)
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Room joining procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested account doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccountName) THEN
@@ -519,15 +605,12 @@ BEGIN
     -- Error: If the class doesn't exist
     ELSEIF NOT EXISTS (SELECT * FROM class WHERE ClassName = Class) THEN
 		SELECT 'Invalid class' AS message;
-    
+        
+    -- Attempt to place the player back on their last tile if they are already in the room
     ELSE
-		-- Attempt to place the player back on their last tile if they are already in the room
+		-- If the player exists, find them
 		IF EXISTS (SELECT * FROM player WHERE RoomID = InRoomID AND AccountName = InAccountName) THEN
 			SET @player = (SELECT PlayerID FROM player WHERE RoomID = InRoomID AND AccountName = InAccountName);
-        
-			UPDATE player
-            SET ClassName = Class
-            WHERE PlayerID = @player;
         
 			-- 	If someone else is currently on the tile which the player was on when they left then return a message to the caller
 			IF ((SELECT COUNT(pt.PlayerID)
@@ -551,12 +634,20 @@ BEGIN
 														AND YPos = 0
 														AND RoomID = InRoomID)) THEN
                     SELECT 'Tile occupied';
+                    
 			ELSE
 				
+                -- Update the player's class
+				UPDATE player
+				SET ClassName = Class
+				WHERE PlayerID = @player;
+            
                 -- Reactivate the player on that tile
 				UPDATE player
 				SET `Active` = 1
 				WHERE PlayerID = @player;
+                
+                COMMIT;
 			
             END IF;
             
@@ -596,18 +687,30 @@ BEGIN
 						(SELECT PlayerID FROM player WHERE AccountName = InAccountName AND RoomID = InRoomID),
 						CURRENT_TIMESTAMP()
 						);
+                        
+			COMMIT;
+            
 		END IF;
                         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
 -- Create the player statistic value
-CREATE PROCEDURE Attach_Player_Stat (
+CREATE PROCEDURE Attach_Player_Stat(
 	IN InPlayer INT,
     IN InStatName VARCHAR(16)
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Player statistic attachment failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the player doesn't exist
     IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = InPlayer) THEN
@@ -635,19 +738,26 @@ BEGIN
 																					WHERE pa.PlayerID = InPlayer
 																						AND pa.Dropped IS NULL)
 																AND StatName = InStatName) AS st), InPlayer);
+        COMMIT;
 
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
 -- Get all abilities in the player's inventory
-CREATE PROCEDURE Get_Inventory (
+CREATE PROCEDURE Get_Inventory(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
 
-		-- Error: If the account doesn't exist
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Inventory getting failed' AS message;
+	END;
+    
+	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
     
@@ -672,7 +782,7 @@ BEGIN
 END//
 
 -- Find available movement tiles and move player
-CREATE PROCEDURE Move_Player (
+CREATE PROCEDURE Move_Player(
 	IN InAccount VARCHAR(32),
     IN InRoom INT,
 	IN MoveX INT,
@@ -684,6 +794,14 @@ BEGIN
 
 	DECLARE playerX INT;
 	DECLARE playerY INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Player movement procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested radius is too small
     IF SearchRadius < 1 THEN
@@ -737,20 +855,31 @@ BEGIN
         
 			INSERT INTO player_tile (TileID, PlayerID, MovedOn)
 				VALUES ((SELECT TileID FROM tile WHERE XPos = MoveX AND YPos = MoveY), @player, CURRENT_TIMESTAMP());
-                
+			
+            COMMIT;
+            
 		END IF;
         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
 -- Glitch ability movement
-CREATE PROCEDURE Glitch_Ability (
+CREATE PROCEDURE Glitch_Ability(
 	IN InRoom INT
 )
 BEGIN
 
 	DECLARE i INT DEFAULT 1;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Glitch ability procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
@@ -795,7 +924,10 @@ BEGIN
 		
         DROP TEMPORARY TABLE IF EXISTS glitchabilities;
         
+        COMMIT;
+        
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -804,7 +936,12 @@ CREATE FUNCTION Random_Tile(
 	Room INT
 ) RETURNS INT DETERMINISTIC
 BEGIN
-	
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		RETURN 0;
+	END;
+    
     -- Error: If the requested room doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
 		RETURN 0;
@@ -823,6 +960,14 @@ CREATE PROCEDURE Transfer_Abilities(
     IN InRoom INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Ability transfer failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	CASE
     
@@ -854,11 +999,13 @@ BEGIN
 					IF EXISTS (SELECT * FROM player_ability WHERE AbilityID = Item2 AND Dropped IS NULL) THEN
 						CALL Drop_Ability(@player, Item2);
 						SELECT 'First selection was null, second was in player inventory' AS message;
+                        COMMIT;
 						
 					-- If the first ability is on a tile
 					ELSEIF EXISTS (SELECT * FROM tile_ability WHERE AbilityID = Item2 AND Removed IS NULL) THEN
 						CALL Pickup_Ability(@player, Item2);  
 						SELECT 'First selection was null, second was in tile inventory' AS message;
+                        COMMIT;
 					
 					END IF;
 					
@@ -871,11 +1018,13 @@ BEGIN
 				IF EXISTS (SELECT * FROM player_ability WHERE AbilityID = Item1 AND Dropped IS NULL) THEN
 					CALL Drop_Ability(@player, Item1);   
 					SELECT 'Second selection was null, first was in player inventory' AS message;
+                    COMMIT;
 				
 				-- If the first ability is on a tile
 				ELSEIF EXISTS (SELECT * FROM tile_ability WHERE AbilityID = Item1 AND Removed IS NULL) THEN
 					CALL Pickup_Ability(@player, Item1);  
-					SELECT 'Second selection was null, first was in tile inventory' AS message; 
+					SELECT 'Second selection was null, first was in tile inventory' AS message;
+                    COMMIT;
 				
 				END IF;
 			
@@ -887,6 +1036,7 @@ BEGIN
 						CALL Drop_Ability(@player, Item1);
 						CALL Pickup_Ability(@player, Item2);
 						SELECT 'Selection 1 in player inv, 2 in tile inventory' AS message;
+                        COMMIT;
 					END IF;
 				
 				-- If the second given ability is in the player's inventory
@@ -896,17 +1046,19 @@ BEGIN
 						CALL Drop_Ability(@player, Item2);
 						CALL Pickup_Ability(@player, Item1);
 						SELECT 'Selection 2 in player inv, 1 in tile inventory' AS message;
+                        COMMIT;
 					END IF;
 				
 				END IF;
 				
 			ELSE
              
-				SELECT 'Missed All Checks' AS message; 
+				SELECT 'Missed All Checks' AS message;
             
 			END IF; 
 
 	END CASE;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -916,6 +1068,14 @@ CREATE PROCEDURE Pickup_Ability (
     IN AbilityInstance INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Ability pickup failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = Player AND `Active` = 1) THEN
@@ -934,10 +1094,13 @@ BEGIN
 		
 		INSERT INTO player_ability (PlayerID, AbilityID, PickedUp)
 			VALUES (Player, AbilityInstance, CURRENT_TIMESTAMP());
-            
+		
+        COMMIT;
+        
 		CALL Update_Score(Player);
         
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
@@ -947,6 +1110,14 @@ CREATE PROCEDURE Drop_Ability (
     IN AbilityInstance INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Drop ability failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = Player AND `Active` = 1) THEN
@@ -971,11 +1142,14 @@ BEGIN
 			INSERT INTO tile_ability (TileID, AbilityID, Placed)
 				VALUES ((SELECT TileID FROM player_tile WHERE PlayerID = Player AND MovedOff IS NULL), AbilityInstance, CURRENT_TIMESTAMP());
 			
+            COMMIT;
+            
             CALL Update_Score(Player);
             
 		END IF;
         
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
@@ -985,9 +1159,18 @@ CREATE PROCEDURE Update_Score (
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Update score failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = InPlayer AND `Active` = 1) THEN
 		SELECT 'Invalid player id' AS message;
+        ROLLBACK;
 
 	-- Default: If there is nothing in the inventory score is just the battle score
     ELSEIF NOT EXISTS (SELECT * FROM player_ability WHERE PlayerID = InPlayer AND Dropped IS NULL) THEN
@@ -996,7 +1179,7 @@ BEGIN
         UPDATE player
 			SET CurrentScore = @newscore
 			WHERE PlayerID = InPlayer;
-	
+    
     -- Set the player's score to the sum of the values of all abilities they are currently holding plus their battle score
     ELSE
 		SET @newscore = ( SELECT SUM(a.`Value`) + p.BattleScore
@@ -1015,6 +1198,7 @@ BEGIN
 		UPDATE player
 			SET CurrentScore = @newscore
 			WHERE PlayerID = InPlayer;
+            
 	END IF;
     
     -- Update the high score if necessary
@@ -1024,6 +1208,8 @@ BEGIN
         WHERE PlayerID = InPlayer;
 	END IF;
 
+	COMMIT;
+    
 END//
 
 -- Get score
@@ -1031,6 +1217,11 @@ CREATE FUNCTION Get_Score ( InAccountName VARCHAR(32), Room INT )
 RETURNS INT DETERMINISTIC
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		RETURN 0;
+	END;
+    
 	-- Default: If requested player doesn't exist return 0
 	IF NOT EXISTS (SELECT CurrentScore FROM player WHERE AccountName = InAccountName AND RoomID = Room) THEN
 		RETURN 0;
@@ -1047,6 +1238,12 @@ CREATE PROCEDURE Get_Leaderboard(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Get leaderboard failed' AS message;
+        ROLLBACK;
+	END;
+    
 	-- Error: If requested room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
 		SELECT 'Invalid room' AS message;
@@ -1054,12 +1251,13 @@ BEGIN
 	-- Get the player names and high scores from the requested room
 	ELSE
 		SELECT AccountName, HighScore FROM player WHERE RoomID = Room;
+        
 	END IF;
 
 END//
 
 -- Get all the abilities on the given x/y range around the player
-CREATE PROCEDURE Get_Tile_Inventory (
+CREATE PROCEDURE Get_Tile_Inventory(
 	IN InAccount VARCHAR(32),
     IN InRoom INT,
     IN InXRange INT,
@@ -1067,6 +1265,12 @@ CREATE PROCEDURE Get_Tile_Inventory (
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Tile inventory getter failed' AS message;
+        ROLLBACK;
+	END;
+    
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1126,6 +1330,14 @@ CREATE PROCEDURE Kill_Room(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Killing room failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If the requested room does not exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
 		SELECT 'Room does not exist' AS message;
@@ -1133,8 +1345,10 @@ BEGIN
     -- Delete the requested room
     ELSE
 		DELETE FROM room WHERE RoomID = Room;
+        COMMIT;
         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1146,6 +1360,14 @@ CREATE PROCEDURE Update_Account(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Account update failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If requested account doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account does not exist' AS message;
@@ -1153,11 +1375,14 @@ BEGIN
     -- Update the requested account with the given data
     ELSE
 		UPDATE `account`
-			SET `Admin`= IsAdmin,
-				`Locked` = IsLocked
-			WHERE AccountName = InAccount;
+		SET `Admin`= IsAdmin,
+			`Locked` = IsLocked
+		WHERE AccountName = InAccount;
+		
+        COMMIT;
 		
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1167,6 +1392,14 @@ CREATE PROCEDURE Delete_Account(
     IN Confirm BIT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Account deletion failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the account deletion wasn't confirmed
 	IF Confirm <> 1 THEN
@@ -1179,8 +1412,10 @@ BEGIN
     -- Delete the requested account
     ELSE
 		DELETE FROM `account` WHERE AccountName = InAccount;
+        COMMIT;
         
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1192,13 +1427,23 @@ CREATE PROCEDURE Send_Message(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Message send failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
+        ROLLBACK;
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
 		SELECT 'Room not found' AS message;
+        ROLLBACK;
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -1206,7 +1451,10 @@ BEGIN
 		INSERT INTO message (PlayerID, `Text`, SendTime)
 			VALUES (@player, Message, CURRENT_TIMESTAMP());
 	
+		COMMIT;
+    
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1216,6 +1464,12 @@ CREATE PROCEDURE Get_Messages(
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Message getter failed' AS message;
+        ROLLBACK;
+	END;
+    
 	-- Error: If the room doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
 		SELECT 'Invalid room' AS message;
@@ -1233,13 +1487,21 @@ BEGIN
 END//
 
 -- Update Player Data
-CREATE PROCEDURE Update_Player (
+CREATE PROCEDURE Update_Player(
 	IN InAccount VARCHAR(32),
 	IN Room INT,
     IN Score_Current INT,
     IN Score_High INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Player update failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	SET @player = (SELECT PlayerID FROM player WHERE RoomID = Room AND AccountName = InAccount);
 
@@ -1250,11 +1512,14 @@ BEGIN
     -- Update the requested player with the given data
     ELSE
 		UPDATE `player`
-			SET HighScore = Score_High,
-				CurrentScore = Score_Current
-			WHERE PlayerID = @player;
+		SET HighScore = Score_High,
+			CurrentScore = Score_Current
+		WHERE PlayerID = @player;
+		
+        COMMIT;
 		
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1265,6 +1530,14 @@ CREATE PROCEDURE Engage_Combat(
     IN Target INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Combat engaging failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
@@ -1303,8 +1576,11 @@ BEGIN
 			WHEN PlayerID = @player THEN Target
             WHEN PlayerID = Target THEN @player
             END;
+		
+        COMMIT;
 
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1314,6 +1590,14 @@ CREATE PROCEDURE Disengage_Combat(
     IN InRoom INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Disengage combat failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
@@ -1341,7 +1625,10 @@ BEGIN
         WHERE PlayerID = @player
 			OR PlayerID = @otherplayer;  
 
+		COMMIT;
+
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1350,6 +1637,14 @@ CREATE PROCEDURE Attack(
 	IN Ability INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Attack procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Find the player that is currently holding the ability
 	SET @attacker = (SELECT PlayerID FROM player_ability WHERE AbilityID = Ability AND Dropped IS NULL);
@@ -1392,12 +1687,15 @@ BEGIN
         SET CurrentEnergy = CurrentEnergy - (SELECT Cost FROM ability WHERE AbilityName = (SELECT AbilityName FROM abilityinstance WHERE AbilityID = Ability))
         WHERE PlayerID = @attacker;
         
+		COMMIT;
+        
 		-- Check target health
 		IF (SELECT CurrentHealth FROM player WHERE PlayerID = @target) <= 0 THEN
 			CALL Resolve_Combat(@attacker, @target);
 		END IF;
 
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1407,6 +1705,14 @@ CREATE PROCEDURE Resolve_Combat(
     IN Loser INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Combat resolution failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If one of the player's doesn't exist
     IF NOT EXISTS (SELECT * FROM player WHERE (PlayerID = Winner OR PlayerID = Loser) AND `Active` = 1) THEN
@@ -1469,18 +1775,22 @@ BEGIN
                         AND YPos = 0),
                     CURRENT_TIMESTAMP());
         
+		COMMIT;
+        
 		-- Update both player's scores 
 		CALL Update_Score(Winner);
         CALL Update_Score(Loser);
 
 	END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
 -- Get a free instance of a given ability
-CREATE FUNCTION Get_Instance(In_Ability VARCHAR(24))
+CREATE FUNCTION Get_Instance( In_Ability VARCHAR(24) )
 RETURNS INT DETERMINISTIC
 BEGIN
+
 	-- Find an unused ability instance for the given ability
 	RETURN (
 			SELECT AbilityID
@@ -1496,12 +1806,20 @@ BEGIN
 END//
 
 -- Exiting room
-CREATE PROCEDURE Exit_Room (
+CREATE PROCEDURE Exit_Room(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
 	
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Exiting room failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1521,8 +1839,11 @@ BEGIN
 		UPDATE player
 		SET `Active` = 0
         WHERE PlayerID = @player;
+        
+        COMMIT;
     
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
@@ -1534,6 +1855,14 @@ CREATE PROCEDURE Rejoin_At (
 )
 BEGIN
 	
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Rejoining room failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
+
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1557,7 +1886,7 @@ BEGIN
     -- Error: If tile is not in player's room
     ELSEIF (SELECT RoomID FROM tile WHERE TileID = NewLocation) <> (SELECT RoomID FROM player WHERE AccountName = InAccount AND RoomID = InRoom) THEN
 		SELECT 'Tile not in players room' AS message;
-    
+	
     -- Error: If tile is occupied
     ELSEIF (SELECT COUNT(pt.PlayerID)
 				FROM player_tile pt
@@ -1584,7 +1913,10 @@ BEGIN
         SET `Active` = 1
         WHERE PlayerID = @player;
     
+		COMMIT;
+    
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
     
 END//
 
@@ -1592,6 +1924,11 @@ END//
 CREATE PROCEDURE Get_Rooms ()
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting rooms failed' AS message;
+	END;
+    
 	SELECT r.RoomID, r.RoomName, COUNT(p.PlayerID) AS PlayerCount
     FROM room r
     LEFT JOIN player p
@@ -1602,14 +1939,21 @@ BEGIN
 END//
 
 -- Get all the rooms owned by a specific account
-CREATE PROCEDURE Get_Owned_Rooms (
+CREATE PROCEDURE Get_Owned_Rooms(
 	IN `User` VARCHAR(32)
 )
 BEGIN
-	
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting owned rooms failed' AS message;
+	END;
+    
     -- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = `User`) THEN
 		SELECT 'Account not found';
+        ROLLBACK;
+        
 	ELSE
 		SELECT r.RoomID, r.RoomName, COUNT(p.PlayerID) AS PlayerCount
         FROM room r
@@ -1624,14 +1968,20 @@ BEGIN
 END//
 
 -- Get the basic details about a given room
-CREATE PROCEDURE Get_Room (
+CREATE PROCEDURE Get_Room(
 	IN room INT
 )
 BEGIN
 	
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting room failed' AS message;
+	END;
+    
     -- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = room) THEN
 		SELECT 'Room not found';
+        
 	ELSE
 		SELECT RoomName, p.AccountName
         FROM room r
@@ -1646,23 +1996,33 @@ BEGIN
 END//
 
 -- Get all players in the database and what room they are in
-CREATE PROCEDURE Get_Players ()
+CREATE PROCEDURE Get_Players()
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting players failed' AS message;
+	END;
+    
 	SELECT p.AccountName, r.RoomName, r.RoomID
     FROM player p
 	JOIN room r
-	ON p.RoomID = r.RoomID;
-
+		ON p.RoomID = r.RoomID;
+        
 END//
 
 -- Get the details of a specific player in the database
-CREATE PROCEDURE Get_Player (
+CREATE PROCEDURE Get_Player(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting player failed' AS message;
+	END;
+    
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1689,12 +2049,17 @@ BEGIN
 END//
 
 -- Get the stats for a specific player
-CREATE PROCEDURE Get_Statistics (
+CREATE PROCEDURE Get_Statistics(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Getting player statistics failed' AS message;
+	END;
+    
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1715,11 +2080,19 @@ BEGIN
 END//
 
 -- Remove a given player from the database
-CREATE PROCEDURE Delete_Player (
+CREATE PROCEDURE Delete_Player(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Player deletion failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
@@ -1731,19 +2104,26 @@ BEGIN
 	
 	ELSE
 		DELETE FROM player WHERE AccountName = InAccount AND RoomID = InRoom;
+        COMMIT;
 
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 
 END//
 
 -- Get all of the tiles around a player in a specified radius
-CREATE PROCEDURE Get_Map_Snapshot (
+CREATE PROCEDURE Get_Map_Snapshot(
 	IN InAccount VARCHAR(32),
     IN InRoom INT,
     IN InRadius INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Failed to get map snapshot' AS message;
+	END;
+    
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1767,38 +2147,43 @@ BEGIN
 			WHERE pt.PlayerID = @player
 				AND pt.MovedOff IS NULL
         )
-		SELECT t.XPos, t.YPos, c.Sprite, p.AccountName, p.Combatant, p.PlayerID
-        FROM tile t
-        LEFT JOIN player_tile pt
-			ON pt.TileID = t.TileID
-				AND pt.MovedOff IS NULL
-		LEFT JOIN player p
-			ON p.PlayerID = pt.PlayerID
-				AND p.`Active` = 1
-		LEFT JOIN class c
-			ON c.ClassName = p.ClassName
-        WHERE t.RoomID = InRoom
-			AND (p.`Active` <> 0
-				OR p.`Active` IS NULL)
-			AND (
-					(t.XPos <= ((SELECT PlayerX FROM player_position) + InRadius)
-						AND t.XPos >= ((SELECT PlayerX FROM player_position) - InRadius))
-				AND
-					(t.YPos <= ((SELECT PlayerY FROM player_position) + InRadius)
-						AND t.YPos >= ((SELECT PlayerY FROM player_position) - InRadius))
-				);
+			SELECT t.XPos, t.YPos, c.Sprite, p.AccountName, p.Combatant, p.PlayerID
+			FROM tile t
+			LEFT JOIN player_tile pt
+				ON pt.TileID = t.TileID
+					AND pt.MovedOff IS NULL
+			LEFT JOIN player p
+				ON p.PlayerID = pt.PlayerID
+					AND p.`Active` = 1
+			LEFT JOIN class c
+				ON c.ClassName = p.ClassName
+			WHERE t.RoomID = InRoom
+				AND (p.`Active` <> 0
+					OR p.`Active` IS NULL)
+				AND (
+						(t.XPos <= ((SELECT PlayerX FROM player_position) + InRadius)
+							AND t.XPos >= ((SELECT PlayerX FROM player_position) - InRadius))
+					AND
+						(t.YPos <= ((SELECT PlayerY FROM player_position) + InRadius)
+							AND t.YPos >= ((SELECT PlayerY FROM player_position) - InRadius))
+					);
 
     END IF;
     
 END//
 
 -- Get the current energy value of a given player
-CREATE PROCEDURE Get_Player_Energy (
+CREATE PROCEDURE Get_Player_Energy(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Failed to get player energy' AS message;
+	END;
+    
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
 		SELECT 'Account not found' AS message;
@@ -1819,11 +2204,19 @@ BEGIN
 END//
 
 -- Increase the given player's energy by a set value
-CREATE PROCEDURE Replenish_Energy (
+CREATE PROCEDURE Replenish_Energy(
 	IN InAccount VARCHAR(32),
     IN InRoom INT
 )
 BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Replenish energy procedure failed' AS message;
+        ROLLBACK;
+	END;
+    
+	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
@@ -1845,17 +2238,25 @@ BEGIN
         SET CurrentHealth = CurrentHealth + 1
         WHERE PlayerID = @player
 			AND CurrentHealth < 20;
+		
+        COMMIT;
         
     END IF;
+	ROLLBACK; -- Revert any changes if the success condition isn't met
 	
 END//
 
 -- Get the first active player from a room
-CREATE PROCEDURE Get_Primary_Player (
+CREATE PROCEDURE Get_Primary_Player(
 	IN InRoom INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Failed to get primary player' AS message;
+	END;
+    
 	-- Error: If the room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
 		SELECT 'Room not found' AS message;
@@ -1873,11 +2274,16 @@ BEGIN
 END//
 
 -- Get a list of all unoccupied tiles in a room
-CREATE PROCEDURE Get_Available_Tiles (
+CREATE PROCEDURE Get_Available_Tiles(
 	IN InRoom INT
 )
 BEGIN
 
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+		SELECT 'Failed to get available tiles' AS message;
+	END;
+    
 	-- Error: If the room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
 		SELECT 'Room not found' AS message;

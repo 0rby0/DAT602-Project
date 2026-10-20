@@ -364,7 +364,7 @@ BEGIN
     
 	START TRANSACTION;
 
-	-- Redirect: If requested account name doesn't exist
+	-- Error: If requested account name doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Username) THEN
 		SELECT 'Account not found' AS message;
         
@@ -374,11 +374,10 @@ BEGIN
 		SET LoginAttempts = LoginAttempts + 1
 		WHERE AccountName = In_Username;
     
-		IF (SELECT LoginAttempts FROM `account` WHERE AccountName = In_Username) > 5 THEN
-			UPDATE `account`
-            SET `Locked` = 1
-            WHERE AccountName = In_Username;
-		END IF;
+		UPDATE `account`
+		SET `Locked` = 1
+		WHERE AccountName = In_Username
+			AND LoginAttempts > 5;
     
 		SELECT 'Login failed' AS message;
 	
@@ -555,7 +554,7 @@ BEGIN
     
 	START TRANSACTION;
 
-    -- Error: If the given x/y doesn't exist in the given room
+    -- Error: If the given tile doesn't exist
     IF NOT EXISTS (SELECT * FROM tile WHERE TileID = InTile) THEN
 		SELECT 'Tile does not exist' AS message;
     
@@ -637,16 +636,12 @@ BEGIN
                     
 			ELSE
 				
-                -- Update the player's class
+                -- Update the player's class and reactivate the player on that tile
 				UPDATE player
-				SET ClassName = Class
+				SET ClassName = Class,
+					`Active` = 1
 				WHERE PlayerID = @player;
             
-                -- Reactivate the player on that tile
-				UPDATE player
-				SET `Active` = 1
-				WHERE PlayerID = @player;
-                
                 COMMIT;
 			
             END IF;
@@ -766,15 +761,13 @@ BEGIN
 		SELECT 'Room not found' AS message;
         
 	ELSE
-		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
-        
         SELECT a.*, ai.AbilityID
         FROM player_ability pa
         JOIN abilityinstance ai
 			ON ai.AbilityID = pa.AbilityID
 		JOIN ability a
 			ON ai.AbilityName = a.AbilityName
-        WHERE pa.PlayerID = @player
+        WHERE pa.PlayerID = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom)
 			AND pa.Dropped IS NULL;
 
     END IF;
@@ -816,7 +809,16 @@ BEGIN
 		SELECT 'Room not found' AS message;
 	
     -- Error: If tile is already occupied
-    ELSEIF EXISTS (SELECT pt.PlayerID FROM player_tile pt JOIN player p ON p.PlayerID = pt.PlayerID WHERE pt.MovedOff IS NULL AND pt.TileID = (SELECT TileID FROM tile WHERE XPos = MoveX AND YPos = MoveY) AND p.`Active` = 1) THEN
+    ELSEIF EXISTS (SELECT pt.PlayerID
+					FROM player_tile pt
+                    JOIN player p
+						ON p.PlayerID = pt.PlayerID 
+					WHERE pt.MovedOff IS NULL 
+						AND pt.TileID = (SELECT TileID 
+										FROM tile
+										WHERE XPos = MoveX 
+											AND YPos = MoveY) 
+						AND p.`Active` = 1) THEN
 		SELECT 'Tile already occupied' AS message;
     
 	ELSE

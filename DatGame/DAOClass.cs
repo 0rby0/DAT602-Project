@@ -64,6 +64,12 @@ namespace DATGame
 				return response;
 			}
 
+            catch (Exception e)
+            {
+                GD.Print(e);
+                return "";
+            }
+
 			finally
 			{
 				// Close the connection no matter what happened
@@ -86,15 +92,21 @@ namespace DATGame
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
 					while (reader.Read())
-					{
-						response = reader.GetValue(0).ToString();
+                    {
+                        response = reader.GetValue(0).ToString();
 					}
 				}
 
 				return response;
-			}
+            }
 
-			finally
+            catch (Exception e)
+            {
+                GD.Print(e);
+                return "";
+            }
+
+            finally
 			{
 				_connection.Close();
 			}
@@ -176,9 +188,14 @@ namespace DATGame
 
 				MySqlCommand command = new MySqlCommand($"CALL Delete_Account('{username}', 1);", _connection);
 				command.ExecuteNonQuery();
-			}
+            }
 
-			finally
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+
+            finally
 			{
 				_connection.Close();
 			}
@@ -248,6 +265,11 @@ namespace DATGame
 
                 MySqlCommand command = new MySqlCommand($"CALL Update_Account('{username}', {admini}, {lockedi});", _connection);
                 command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                GD.Print(e);
             }
 
             finally
@@ -448,6 +470,11 @@ namespace DATGame
 				command.ExecuteNonQuery();
             }
 
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+
             finally
             {
                 _connection.Close();
@@ -465,7 +492,12 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-			finally
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+
+            finally
 			{
 				_connection.Close();
 			}
@@ -557,6 +589,11 @@ namespace DATGame
                 MySqlCommand command = new MySqlCommand($"CALL Transfer_Abilities({id1i}, {id2i}, '{account}', {room});", _connection);
 
                 command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                GD.Print(e);
             }
 
             finally
@@ -685,6 +722,11 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+
             finally
             {
                 _connection.Close();
@@ -700,6 +742,11 @@ namespace DATGame
                 MySqlCommand command = new MySqlCommand($"CALL Delete_Player('{account}', {room});", _connection);
 
                 command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                GD.Print(e);
             }
 
             finally
@@ -1009,6 +1056,11 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+
             finally
             {
                 _connection.Close();
@@ -1065,6 +1117,11 @@ namespace DATGame
                 MySqlCommand command = new MySqlCommand($"CALL Move_Player('{username}', {room}, {x}, {y}, {range}, {idiagonal});", _connection);
 
                 command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                GD.Print(e);
             }
 
             finally

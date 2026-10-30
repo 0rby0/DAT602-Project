@@ -361,13 +361,15 @@ BEGIN
     BEGIN
 		SELECT 'Login procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested account name doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Username) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
         
     -- Error: If requested password does not match requested username
 	ELSEIF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Username AND `Password` = In_Password) THEN
@@ -380,11 +382,13 @@ BEGIN
 		WHERE AccountName = In_Username
 			AND LoginAttempts > 5;
     
-		SELECT 'Login failed' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Login failed';
 	
     -- Error: If requested account is locked
     ELSEIF (SELECT `Locked` FROM `account` WHERE AccountName = In_Username LIMIT 1) <> 0 THEN
-		SELECT 'Account locked' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account locked';
     
 	-- Return the username and reset the login attempts
 	ELSE
@@ -411,13 +415,15 @@ BEGIN
     BEGIN
 		SELECT 'Account creation procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested account name already exists
 	IF EXISTS (SELECT * FROM `account` WHERE AccountName = IN_Username) THEN
-		SELECT 'Account name already exists' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account name already exists';
 	
     -- Create the new account with the requested username and password and log in to it
 	ELSE
@@ -445,13 +451,15 @@ BEGIN
     BEGIN
 		SELECT 'Room creation procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
     
     -- Error: Requested room owner account name doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = In_Player) THEN
-		SELECT 'Invalid account name' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid account name';
 	
     -- Create the new room with the requested name and owner, then create new ability instances
     ELSE
@@ -498,13 +506,15 @@ BEGIN
     BEGIN
 		SELECT 'Tile layout procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
     -- Error: If requested room doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room does not exist';
 	
     -- Loop across and then down the x and y of the grid, creating each tile
 	ELSE
@@ -551,17 +561,20 @@ BEGIN
     BEGIN
 		SELECT 'Ability placement procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
     -- Error: If the given tile doesn't exist
     IF NOT EXISTS (SELECT * FROM tile WHERE TileID = InTile) THEN
-		SELECT 'Tile does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Tile does not exist';
     
     -- Error: If requested ability instance doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM ability WHERE AbilityName = InAbility) THEN
-		SELECT 'Ability does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Ability does not exist';
 	
     -- Create the item instance and put it on the tile
 	ELSE
@@ -590,21 +603,25 @@ BEGIN
     BEGIN
 		SELECT 'Room joining procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested account doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccountName) THEN
-		SELECT 'Account does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account does not exist';
 
 	-- Error: If requested room doesn't exist
     ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoomID) THEN
-		SELECT 'Room does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room does not exist';
 	
     -- Error: If the class doesn't exist
     ELSEIF NOT EXISTS (SELECT * FROM class WHERE ClassName = Class) THEN
-		SELECT 'Invalid class' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid class';
         
     -- Attempt to place the player back on their last tile if they are already in the room
     ELSE
@@ -633,7 +650,8 @@ BEGIN
 													WHERE XPos = 0
 														AND YPos = 0
 														AND RoomID = InRoomID)) THEN
-                    SELECT 'Tile occupied';
+                    SIGNAL SQLSTATE '45000'
+						SET MESSAGE_TEXT = 'Tile occupied';
                     
 			ELSE
 				
@@ -704,17 +722,20 @@ BEGIN
     BEGIN
 		SELECT 'Player statistic attachment failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the player doesn't exist
     IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = InPlayer) THEN
-		SELECT 'Player not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player not found';
 	
     -- Error: If the stat link already exists
     ELSEIF EXISTS (SELECT * FROM player_stat WHERE StatName = InStatName AND PlayerID = InPlayer) THEN
-		SELECT 'Link already exists' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Link already exists';
     
 	ELSE
     
@@ -751,15 +772,18 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Inventory getting failed' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
         SELECT a.*, ai.AbilityID
@@ -793,21 +817,25 @@ BEGIN
     BEGIN
 		SELECT 'Player movement procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested radius is too small
     IF SearchRadius < 1 THEN
-		SELECT 'Search radius too small' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Search radius too small';
 	
 		-- Error: If the account doesn't exist
     ELSEIF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
     -- Error: If tile is already occupied
     ELSEIF EXISTS (SELECT pt.PlayerID
@@ -820,7 +848,8 @@ BEGIN
 										WHERE XPos = MoveX 
 											AND YPos = MoveY) 
 						AND p.`Active` = 1) THEN
-		SELECT 'Tile already occupied' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Tile already occupied';
     
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -831,7 +860,8 @@ BEGIN
         
     	-- Error: If procedure tries to move diagonally without diagonal flag
 		IF AllowDiagonal = 0 AND ((@playerX - MoveX) <> 0 AND (@playerY - MoveY) <> 0) THEN
-				SELECT 'Diagonal movement on non-diagonal check' AS message;
+				SIGNAL SQLSTATE '45000'
+					SET MESSAGE_TEXT = 'Diagonal movement on non-diagonal check';
                 
 		-- Error: Requested tile is out of range
 		ELSEIF NOT EXISTS (WITH surroundingtiles AS 
@@ -847,7 +877,8 @@ BEGIN
 									WHERE PlayerID = @player)
 			) SELECT TileID FROM surroundingtiles WHERE XPos = MoveX AND YPos = MoveY) THEN
 			
-            SELECT 'Tile out of range' AS message;
+            SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Tile out of range';
 		
         -- Place the requested player on the requested tile and remove them from the previous tile
         ELSE
@@ -880,13 +911,15 @@ BEGIN
     BEGIN
 		SELECT 'Glitch ability procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room does not exist';
     
     ELSE 
 		-- Remove the requested ability instance from its tile and add it to the player's inventory
@@ -943,6 +976,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		RETURN 0;
+        RESIGNAL;
 	END;
     
     -- Error: If the requested room doesn't exist
@@ -968,6 +1002,7 @@ BEGIN
     BEGIN
 		SELECT 'Ability transfer failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
@@ -976,15 +1011,18 @@ BEGIN
     
 		-- Error: If one of the requested ability instances doen't exist
 		WHEN NOT EXISTS (SELECT * FROM abilityinstance WHERE AbilityID = Item1 OR AbilityID = Item2) THEN
-			SELECT 'One or both ability instances not found' AS message;
+			SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'One or both ability instances not found';
 		
         -- Error: If the account doesn't exist
         WHEN NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-			SELECT 'Account not found' AS message;
+			SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Account not found';
 		
         -- Error: If the room doesn't exist
 		WHEN NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-			SELECT 'Room not found' AS message;
+			SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Room not found';
 		
 		ELSE
 		
@@ -995,7 +1033,8 @@ BEGIN
 			
 				-- Error: If both abilities are null
 				IF Item2 = -1 THEN
-					SELECT 'No abilities to swap' AS message;
+					SIGNAL SQLSTATE '45000'
+						SET MESSAGE_TEXT = 'No abilities to swap';
 					
 				ELSE
 					-- If the second given ability is in the player's inventory
@@ -1056,7 +1095,8 @@ BEGIN
 				
 			ELSE
              
-				SELECT 'Missed All Checks' AS message;
+				SIGNAL SQLSTATE '45000'
+					SET MESSAGE_TEXT = 'Missed All Checks';
             
 			END IF; 
 
@@ -1076,17 +1116,20 @@ BEGIN
     BEGIN
 		SELECT 'Ability pickup failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = Player AND `Active` = 1) THEN
-		SELECT 'Invalid player' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid player';
     
     -- Error: If requested ability instance doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM abilityinstance WHERE abilityID = AbilityInstance) THEN
-		SELECT 'Invalid ability instance' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid ability instance';
     
     -- Remove the requested item from its current tile and add it to the player's inventory
     ELSE
@@ -1118,21 +1161,25 @@ BEGIN
     BEGIN
 		SELECT 'Drop ability failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = Player AND `Active` = 1) THEN
-		SELECT 'Invalid player' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid player';
     
     -- Error: If requested ability instance doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM abilityinstance WHERE abilityID = AbilityInstance) THEN
-		SELECT 'Invalid ability instance' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid ability instance';
     
     -- Error: If player isn't holding ability
     ELSEIF NOT EXISTS (SELECT * FROM player_ability WHERE AbilityID = AbilityInstance AND PlayerID = Player AND Dropped IS NULL) THEN
-		SELECT 'Player is not holding that ability' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player is not holding that ability';
     
     -- Remove the requested item from its current tile and add it to the player's inventory
     ELSE
@@ -1166,14 +1213,15 @@ BEGIN
     BEGIN
 		SELECT 'Update score failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = InPlayer AND `Active` = 1) THEN
-		SELECT 'Invalid player id' AS message;
-        ROLLBACK;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid player id';
 
 	-- Default: If there is nothing in the inventory score is just the battle score
     ELSEIF NOT EXISTS (SELECT * FROM player_ability WHERE PlayerID = InPlayer AND Dropped IS NULL) THEN
@@ -1223,6 +1271,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		RETURN 0;
+        RESIGNAL;
 	END;
     
 	-- Default: If requested player doesn't exist return 0
@@ -1245,11 +1294,13 @@ BEGIN
     BEGIN
 		SELECT 'Get leaderboard failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	-- Error: If requested room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
-		SELECT 'Invalid room' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid room';
 
 	-- Get the player names and high scores from the requested room
 	ELSE
@@ -1272,19 +1323,23 @@ BEGIN
     BEGIN
 		SELECT 'Tile inventory getter failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
 	-- Error: If the x or y range is not possible
     ELSEIF InXRange < 0 OR InYRange < 0 THEN
-		SELECT 'Invalid search range' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid search range';
     
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -1337,13 +1392,15 @@ BEGIN
     BEGIN
 		SELECT 'Killing room failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the requested room does not exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
-		SELECT 'Room does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room does not exist';
 	
     -- Delete the requested room
     ELSE
@@ -1367,13 +1424,15 @@ BEGIN
     BEGIN
 		SELECT 'Account update failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If requested account doesn't exist
 	IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account does not exist';
     
     -- Update the requested account with the given data
     ELSE
@@ -1400,17 +1459,20 @@ BEGIN
     BEGIN
 		SELECT 'Account deletion failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account deletion wasn't confirmed
 	IF Confirm <> 1 THEN
-		SELECT 'Account deletion cancelled' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account deletion cancelled';
     
     -- Error: If the requested account doesn't exist
     ELSEIF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account does not exist';
     
     -- Delete the requested account
     ELSE
@@ -1434,19 +1496,20 @@ BEGIN
     BEGIN
 		SELECT 'Message send failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
-        ROLLBACK;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
-        ROLLBACK;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -1471,11 +1534,13 @@ BEGIN
     BEGIN
 		SELECT 'Message getter failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	-- Error: If the room doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = Room) THEN
-		SELECT 'Invalid room' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid room';
         
 	ELSE
 		SELECT p.AccountName, m.`Text`
@@ -1502,6 +1567,7 @@ BEGIN
     BEGIN
 		SELECT 'Player update failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
@@ -1510,7 +1576,8 @@ BEGIN
 
 	-- Error: If requested player doesn't exist
 	IF NOT EXISTS (SELECT * FROM player WHERE PlayerID = @player) THEN
-		SELECT 'Player does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player does not exist';
     
     -- Update the requested player with the given data
     ELSE
@@ -1538,37 +1605,45 @@ BEGIN
     BEGIN
 		SELECT 'Combat engaging failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	-- Error: If Player 1 or 2 don't exist
     ELSEIF NOT EXISTS (SELECT * FROM player WHERE ((AccountName = InAccount AND RoomID = InRoom) OR PlayerID = Target) AND `Active` = 1) THEN
-		SELECT 'Invalid player(s)' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid player(s)';
     
 	-- Error: If Player 1 or 2 is already engaged
     ELSEIF NOT EXISTS (SELECT * FROM player WHERE ((AccountName = InAccount AND RoomID = InRoom) OR PlayerID = Target) AND Combatant IS NULL) THEN
-		SELECT 'Player(s) already engaged' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player(s) already engaged';
     
     -- Error: If Player 1 and Player 2 are the same player
     ELSEIF (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom) = Target THEN
-		SELECT 'Identical player' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Identical player';
     
     -- Error: If Player 1 and Player 2 are not in the same room
     ELSEIF (SELECT RoomID FROM player WHERE AccountName = InAccount AND RoomID = InRoom) <> (SELECT RoomID FROM player WHERE PlayerID = Target) THEN
-		SELECT 'Players are in different rooms' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Players are in different rooms';
     
 	-- Error: If Player 1 and Player 2 are too many tiles apart    
     ELSEIF ABS((SELECT t.XPos + t.YPos FROM tile t JOIN player_tile pt ON pt.TileID = t.TileID JOIN player p ON p.PlayerID = pt.PlayerID WHERE p.AccountName = InAccount AND p.RoomID = InRoom AND pt.MovedOff IS NULL) - (SELECT t.XPos + t.YPos FROM tile t JOIN player_tile pt ON pt.TileID = t.TileID WHERE pt.PlayerID = Target AND pt.MovedOff IS NULL)) <> 1 THEN
-		SELECT 'Players too far apart' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Players too far apart';
     
     -- Set each other as combatants
 	ELSE
@@ -1598,25 +1673,30 @@ BEGIN
     BEGIN
 		SELECT 'Disengage combat failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	-- Error: If player doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM player WHERE AccountName = InAccount AND RoomID = InRoom AND `Active` = 1) THEN
-		SELECT 'Invalid player' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Invalid player';
 
 	-- Error: If player is not in combat
 	ELSEIF (SELECT Combatant FROM player WHERE AccountName = InAccount AND RoomID = InRoom) IS NULL THEN
-		SELECT 'Player not in combat' AS messsage;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player not in combat';
 
 	-- Set both player's combatant to null
 	ELSE 
@@ -1645,6 +1725,7 @@ BEGIN
     BEGIN
 		SELECT 'Attack procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
@@ -1654,21 +1735,25 @@ BEGIN
 
 	-- Error: If no one is holding ability
     IF @attacker IS NULL THEN
-		SELECT 'Ability not being held' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Ability not being held';
     
 	-- Error: If the ability can't be used in combat
     ELSEIF (SELECT Combat FROM ability WHERE AbilityName = (SELECT AbilityName FROM abilityinstance WHERE AbilityID = Ability)) = 0 THEN
-		SELECT 'Combat cannot be used in combat' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Combat cannot be used in combat';
     
     -- Error: If attacker has no target
 	ELSEIF (SELECT Combatant FROM player WHERE PlayerID = @attacker) IS NULL THEN
-		SELECT 'No target' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'No target';
 	
     -- Check: Does attacker have enough energy
     ELSEIF (SELECT Cost FROM ability WHERE AbilityName = (SELECT AbilityName FROM abilityinstance WHERE AbilityID = Ability))
 			>
             (SELECT CurrentEnergy FROM player WHERE PlayerID = @attacker) THEN
-		SELECT 'Not enough energy' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Not enough energy';
         
 	ELSE
 		-- Get target player's id
@@ -1713,13 +1798,15 @@ BEGIN
     BEGIN
 		SELECT 'Combat resolution failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If one of the player's doesn't exist
     IF NOT EXISTS (SELECT * FROM player WHERE (PlayerID = Winner OR PlayerID = Loser) AND `Active` = 1) THEN
-		SELECT 'Player(s) do not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player(s) do not exist';
 
 	ELSE
 		SET @scoreincrease = CEIL((SELECT CurrentScore FROM player WHERE PlayerID = Loser) / 10) + (SELECT SUM(`Value`) FROM player_stat WHERE PlayerID = Loser);
@@ -1819,17 +1906,20 @@ BEGIN
     BEGIN
 		SELECT 'Exiting room failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
     
     -- Change player active status
     ELSE
@@ -1862,33 +1952,40 @@ BEGIN
     BEGIN
 		SELECT 'Rejoining room failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	-- Error: If tile does not exist
     ELSEIF NOT EXISTS (SELECT * FROM tile WHERE TileID = NewLocation) THEN
-		SELECT 'Tile does not exist' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Tile does not exist';
     
     -- Error: If the player has not been in the given room before
     ELSEIF NOT EXISTS (SELECT * FROM player WHERE AccountName = InAccount AND RoomID = InRoom)THEN
-		SELECT 'Player has not joined room' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player has not joined room';
         
     -- Error: If the player is active
     ELSEIF (SELECT `active` FROM player WHERE AccountName = InAccount AND RoomID = InRoom) = 1 THEN
-		SELECT 'Player already in game' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Player already in game';
     
     -- Error: If tile is not in player's room
     ELSEIF (SELECT RoomID FROM tile WHERE TileID = NewLocation) <> (SELECT RoomID FROM player WHERE AccountName = InAccount AND RoomID = InRoom) THEN
-		SELECT 'Tile not in players room' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Tile not in players room';
 	
     -- Error: If tile is occupied
     ELSEIF (SELECT COUNT(pt.PlayerID)
@@ -1898,7 +1995,8 @@ BEGIN
 						AND p.`Active` = 1
 				WHERE pt.TileID = NewLocation
 					AND MovedOff IS NULL) > 0 THEN
-		SELECT 'Tile already occupied' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Tile already occupied';
     
     -- Move player to tile and reactivate them
 	ELSE
@@ -1930,6 +2028,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting rooms failed' AS message;
+        RESIGNAL;
 	END;
     
 	SELECT r.RoomID, r.RoomName, COUNT(p.PlayerID) AS PlayerCount
@@ -1950,12 +2049,13 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting owned rooms failed' AS message;
+        RESIGNAL;
 	END;
     
     -- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = `User`) THEN
-		SELECT 'Account not found';
-        ROLLBACK;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
         
 	ELSE
 		SELECT r.RoomID, r.RoomName, COUNT(p.PlayerID) AS PlayerCount
@@ -1979,11 +2079,13 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting room failed' AS message;
+        RESIGNAL;
 	END;
     
     -- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM room WHERE RoomID = room) THEN
-		SELECT 'Room not found';
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SELECT RoomName, p.AccountName
@@ -2005,6 +2107,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting players failed' AS message;
+        RESIGNAL;
 	END;
     
 	SELECT p.AccountName, r.RoomName, r.RoomID
@@ -2024,15 +2127,18 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting player failed' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SELECT r.RoomName, p.AccountName, p.HighScore, p.CurrentScore, p.CurrentEnergy, p.CurrentHealth, t.XPos, t.YPos
@@ -2061,15 +2167,18 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Getting player statistics failed' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -2093,17 +2202,20 @@ BEGIN
     BEGIN
 		SELECT 'Player deletion failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
 	ELSE
 		DELETE FROM player WHERE AccountName = InAccount AND RoomID = InRoom;
@@ -2125,19 +2237,23 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Failed to get map snapshot' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
     -- Error: If the radius is invalid
 	ELSEIF InRadius < 0 THEN
-		SELECT 'Radius too small' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Radius too small';
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -2185,15 +2301,18 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Failed to get player energy' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -2217,17 +2336,20 @@ BEGIN
     BEGIN
 		SELECT 'Replenish energy procedure failed' AS message;
         ROLLBACK;
+        RESIGNAL;
 	END;
     
 	START TRANSACTION;
 
 	-- Error: If the account doesn't exist
     IF NOT EXISTS (SELECT * FROM `account` WHERE AccountName = InAccount) THEN
-		SELECT 'Account not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Account not found';
     
     -- Error: If the room doesn't exist
 	ELSEIF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
         
 	ELSE
 		SET @player = (SELECT PlayerID FROM player WHERE AccountName = InAccount AND RoomID = InRoom);
@@ -2258,11 +2380,13 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Failed to get primary player' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
     ELSE
 		SELECT a.AccountName
@@ -2285,11 +2409,13 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
 		SELECT 'Failed to get available tiles' AS message;
+        RESIGNAL;
 	END;
     
 	-- Error: If the room doesn't exist
 	IF NOT EXISTS (SELECT * FROM room WHERE RoomID = InRoom) THEN
-		SELECT 'Room not found' AS message;
+		SIGNAL SQLSTATE '45000'
+			SET MESSAGE_TEXT = 'Room not found';
 	
     ELSE
 		SELECT XPos, YPos, TileID

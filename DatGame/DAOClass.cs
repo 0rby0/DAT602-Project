@@ -64,7 +64,7 @@ namespace DATGame
 				return response;
 			}
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
                 return "";
@@ -100,7 +100,7 @@ namespace DATGame
 				return response;
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
                 return "";
@@ -190,7 +190,7 @@ namespace DATGame
 				command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -267,7 +267,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -470,7 +470,7 @@ namespace DATGame
 				command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -492,7 +492,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -591,7 +591,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -722,7 +722,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -744,7 +744,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -1056,7 +1056,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }
@@ -1119,7 +1119,7 @@ namespace DATGame
                 command.ExecuteNonQuery();
             }
 
-            catch (Exception e)
+            catch (MySqlException e)
             {
                 GD.Print(e);
             }

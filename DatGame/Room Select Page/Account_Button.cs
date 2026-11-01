@@ -1,4 +1,3 @@
-using DATGame;
 using Godot;
 
 namespace DATGame
@@ -20,12 +19,9 @@ namespace DATGame
 
         public void _Confirm_Delete_Clicked()
         {
-            UserDAO dao = new UserDAO();
-            Main head = GetNode<Main>("/root/Main");
-
-            dao.DeleteAccount(head.Account);
-            head.Account = null;
-            head.SwitchScene("res://Login Page/Login.tscn");
+            UserDAO.global.DeleteAccount(Main.get.Account);
+            Main.get.Account = null;
+            Main.get.SwitchScene("res://Login Page/Login.tscn");
         }
 
         public void _Cancel_Delete_Clicked()

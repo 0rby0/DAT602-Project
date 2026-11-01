@@ -16,12 +16,10 @@ namespace DATGame
 
         public void _Confirm_Create_Clicked()
         {
-            UserDAO dao = new UserDAO();
-
             string username = GetNode<LineEdit>("Account Creator/Line 1/txtUsername").Text;
             string password = GetNode<LineEdit>("Account Creator/Line 2/txtPassword").Text;
 
-            string response = dao.CreateAccount(username, password);
+            string response = UserDAO.global.CreateAccount(username, password);
 
             GetNode<Label>("Account Creator/lblWarning").Text = response;
         }

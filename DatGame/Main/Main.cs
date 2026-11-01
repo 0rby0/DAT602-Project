@@ -1,63 +1,73 @@
-using DATGame;
 using Godot;
-using System;
 
-public partial class Main : Node
+namespace DATGame
 {
-	private string _account;
-	private int _roomID;
-	private string _roomName;
+	public partial class Main : Node
+    {
+		// Creates a permanent global reference to main
+        static public Main get;
+        public Main()
+		{
+            if (get is null)
+            {
+				get = this;
+            }
+        }
 
-	private bool _canmove = true;
+		private string _account;
+		private int _roomID;
+		private string _roomName;
 
-	private int ? _swapitemid1 = null;
-	private int ? _swapitemid2 = null;
-	private bool _itemselected = false;
+		private bool _canmove = true;
+
+		private int ? _swapitemid1 = null;
+		private int ? _swapitemid2 = null;
+		private bool _itemselected = false;
 	
-	private int? _combatant = null;
+		private int? _combatant = null;
 
-	public string Account { get => _account; set => _account = value; }
-	public int Room { get => _roomID; set => _roomID = value; }
-	public string RoomName { get => _roomName; set => _roomName = value; }
-	public bool Canmove { get => _canmove; set => _canmove = value; }
-	public int? Swapitemid2 { get => _swapitemid2; set => _swapitemid2 = value; }
-	public int? Swapitemid1 { get => _swapitemid1; set => _swapitemid1 = value; }
-	public bool Itemselected { get => _itemselected; set => _itemselected = value; }
-	public int? Combatant { get => _combatant; set => _combatant = value; }
+		public string Account { get => _account; set => _account = value; }
+		public int Room { get => _roomID; set => _roomID = value; }
+		public string RoomName { get => _roomName; set => _roomName = value; }
+		public bool Canmove { get => _canmove; set => _canmove = value; }
+		public int? Swapitemid2 { get => _swapitemid2; set => _swapitemid2 = value; }
+		public int? Swapitemid1 { get => _swapitemid1; set => _swapitemid1 = value; }
+		public bool Itemselected { get => _itemselected; set => _itemselected = value; }
+		public int? Combatant { get => _combatant; set => _combatant = value; }
 
-	public override void _Ready()
-	{
-		SwitchScene("res://Login Page/Login.tscn");
-	}
-
-	public void SwitchScene(string scenepath)
-	{
-		foreach (Node child in GetChildren()){
-			child.QueueFree();
+		public override void _Ready()
+		{
+			SwitchScene("res://Login Page/Login.tscn");
 		}
 
-		try
+		public void SwitchScene(string scenepath)
 		{
-			Node switchscene = GD.Load<PackedScene>(scenepath).Instantiate();
-			AddChild(switchscene);
-		}
-		catch
-		{
-			GD.Print("Scene Switch Failed");
-		}
-	}
-
-	public override void _Notification(int what)
-	{
-		if (what == NotificationWMCloseRequest)
-		{
-			if ((_account is not null) & (_roomID > 0))
-			{
-				PlayerDAO dao = new PlayerDAO();
-				dao.ExitRoom(_account, _roomID);
+			foreach (Node child in GetChildren()){
+				child.QueueFree();
 			}
-			GetTree().Quit();
-		}
-	}
 
+			try
+			{
+				Node switchscene = GD.Load<PackedScene>(scenepath).Instantiate();
+				AddChild(switchscene);
+			}
+			catch
+			{
+				GD.Print("Scene Switch Failed");
+			}
+		}
+
+		public override void _Notification(int what)
+		{
+			if (what == NotificationWMCloseRequest)
+			{
+				if ((_account is not null) & (_roomID > 0))
+				{
+					PlayerDAO.global.ExitRoom(_account, _roomID);
+				}
+				GetTree().Quit();
+			}
+		}
+
+	}
 }

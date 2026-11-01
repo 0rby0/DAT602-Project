@@ -6,18 +6,14 @@ namespace DATGame
 {
 	public partial class Display_Snapshot : VBoxContainer
 	{
-		private Main _head;
-
 		public override void _Ready()
 		{
-			_head = GetNode<Main>("/root/Main");
-
 			Regenerate_Display(2, 1, false);
 		}
 
 		public void _MovementRecharged()
 		{
-			_head.Canmove = true;
+			Main.get.Canmove = true;
 		}
 
 		public void Regenerate_Display(int viewradius, int moveradius, bool movediagonal)
@@ -32,8 +28,7 @@ namespace DATGame
             }
 
             // Get the data from the database for the tiles around the player
-            MapDAO dao = new MapDAO();
-            Godot.Collections.Array tiles = dao.GetMapSnapshot(_head.Account, _head.Room, viewradius);
+            Godot.Collections.Array tiles = MapDAO.global.GetMapSnapshot(Main.get.Account, Main.get.Room, viewradius);
 
             // Get the smallest x and y values
             int miny = 0;
@@ -99,7 +94,7 @@ namespace DATGame
 
                         Vector2 referenceposition;
 
-                        if (posvals.TryGetValue(_head.Account, out Variant playerpos))
+                        if (posvals.TryGetValue(Main.get.Account, out Variant playerpos))
                         {
                             referenceposition = (Vector2)playerpos;
                         }
@@ -146,8 +141,7 @@ namespace DATGame
         public void Update_Display(int viewradius, int moveradius, bool movediagonal)
         {
             // Get the data from the database for the tiles around the player
-            MapDAO dao = new MapDAO();
-            Godot.Collections.Array tiles = dao.GetMapSnapshot(_head.Account, _head.Room, viewradius);
+            Godot.Collections.Array tiles = MapDAO.global.GetMapSnapshot(Main.get.Account, Main.get.Room, viewradius);
 
             // Get the smallest x and y values
             int ? miny = null;
@@ -174,7 +168,7 @@ namespace DATGame
                     npi++;
                 }
 
-                if ((string)tile["AccountName"] == _head.Account)
+                if ((string)tile["AccountName"] == Main.get.Account)
                 {
                     playerid = (int)tile["PlayerID"];
                 }
@@ -215,7 +209,7 @@ namespace DATGame
 
                         Vector2 referenceposition;
 
-                        if (posvals.TryGetValue(_head.Account, out Variant playerpos))
+                        if (posvals.TryGetValue(Main.get.Account, out Variant playerpos))
                         {
                             referenceposition = (Vector2)playerpos;
                         }

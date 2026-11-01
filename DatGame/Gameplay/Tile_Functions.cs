@@ -5,16 +5,10 @@ namespace DATGame
 {
     public partial class Tile_Functions : TextureButton
     {
-        private Main _head;
-
         private Dictionary _info;
-
-        private MapDAO _dao = new MapDAO();
 
         public override void _Ready()
         {
-            _head = GetNode<Main>("/root/Main");
-
             if ((TileTypes.Type)(int)_info["type"] == TileTypes.Type.OOBE)
             {
                 return;
@@ -77,21 +71,21 @@ namespace DATGame
         {
             if ((TileTypes.Type)(int)_info["type"] != TileTypes.Type.OOBE)
             {
-                if (_head.Combatant is not null)
+                if (Main.get.Combatant is not null)
                 {
-                    _dao.Disengage(_head.Account, _head.Room);
-                    _head.Combatant = null;
+                    MapDAO.global.Disengage(Main.get.Account, Main.get.Room);
+                    Main.get.Combatant = null;
                 }
                 else if ((string)_info["PlayerID"] != "")
                 {
-                    _dao.Engage(_head.Account, _head.Room, (int)_info["PlayerID"]);
-                    _head.Combatant = (int)_info["PlayerID"];
+                    MapDAO.global.Engage(Main.get.Account, Main.get.Room, (int)_info["PlayerID"]);
+                    Main.get.Combatant = (int)_info["PlayerID"];
                 }
 
-                if (_head.Canmove == true)
+                if (Main.get.Canmove == true)
                 {
-                    _dao.MovePlayer(_head.Account, _head.Room, (int)_info["XPos"], (int)_info["YPos"], (int)_info["moveradius"], (bool)_info["diagonal"]);
-                    _head.Canmove = false;
+                    MapDAO.global.MovePlayer(Main.get.Account, Main.get.Room, (int)_info["XPos"], (int)_info["YPos"], (int)_info["moveradius"], (bool)_info["diagonal"]);
+                    Main.get.Canmove = false;
                 }
             }
         }

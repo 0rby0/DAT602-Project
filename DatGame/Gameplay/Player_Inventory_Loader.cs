@@ -6,15 +6,11 @@ namespace DATGame
 {
     public partial class Player_Inventory_Loader : HBoxContainer
     {
-        private Main _head;
-
         private VBoxContainer _abilityinventory;
         private VBoxContainer _combatinventory;
 
         public override void _Ready()
         {
-            _head = GetNode<Main>("/root/Main");
-
             _abilityinventory = GetNode<VBoxContainer>("Ability/Ability List");
             _combatinventory = GetNode<VBoxContainer>("Combat/Combat List");
 
@@ -28,9 +24,7 @@ namespace DATGame
                 child.QueueFree();
             }
 
-            PlayerDAO dao = new PlayerDAO();
-
-            Godot.Collections.Array inventory = dao.GetInventory(_head.Account, _head.Room);
+            Godot.Collections.Array inventory = PlayerDAO.global.GetInventory(Main.get.Account, Main.get.Room);
 
             for (int slot = 0; slot < Math.Max(8, inventory.Count); slot++)
             {
@@ -77,9 +71,8 @@ namespace DATGame
 
         public void UpdateInventory()
         {
-            PlayerDAO dao = new PlayerDAO();
 
-            Godot.Collections.Array inventory = dao.GetInventory(_head.Account, _head.Room);
+            Godot.Collections.Array inventory = PlayerDAO.global.GetInventory(Main.get.Account, Main.get.Room);
 
             Godot.Collections.Array abilityinventory = new Godot.Collections.Array();
             Godot.Collections.Array combatinventory = new Godot.Collections.Array();

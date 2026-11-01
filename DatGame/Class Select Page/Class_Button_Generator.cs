@@ -6,9 +6,7 @@ namespace DATGame {
     {
         public override void _Ready()
         {
-            GameDAO dao = new GameDAO();
-
-            foreach (Dictionary classinfo in dao.GetClasses())
+            foreach (Dictionary classinfo in GameDAO.global.GetClasses())
             {
                 Node classbox = GD.Load<PackedScene>("res://Class Select Page/Class Button.tscn").Instantiate();
                 Class_Config classboxconf = classbox as Class_Config;

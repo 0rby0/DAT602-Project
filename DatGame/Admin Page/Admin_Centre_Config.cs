@@ -5,7 +5,6 @@ namespace DATGame
 {
     public partial class Admin_Centre_Config : Control
     {
-        private Main _head;
         private VBoxContainer _playerpane;
         private VBoxContainer _accountpane;
         private VBoxContainer _roompane;
@@ -20,8 +19,6 @@ namespace DATGame
 
         public override void _Ready()
         {
-            _head = GetNode<Main>("/root/Main");
-            
             _playerpane = GetNode<VBoxContainer>("CanvasLayer/Columns/Column 2/Player Edit");
             _accountpane = GetNode<VBoxContainer>("CanvasLayer/Columns/Column 2/Account Edit");
             _roompane = GetNode<VBoxContainer>("CanvasLayer/Columns/Column 2/Room Edit");
@@ -29,7 +26,7 @@ namespace DATGame
 
             _list = GetNode<Entry_Select_Filler>("CanvasLayer/Columns/Column 3/Scroll Bar/Name List");
 
-            GetNode<Label>("CanvasLayer/Columns/Column 1/lblAccount").Text = _head.Account;
+            GetNode<Label>("CanvasLayer/Columns/Column 1/lblAccount").Text = Main.get.Account;
         }
 
         public void _Delete_Clicked()
@@ -47,28 +44,25 @@ namespace DATGame
             switch (_view)
             {
                 case 0:
-                    UserDAO udao = new UserDAO();
 
-                    udao.DeleteAccount((string)_currentselection[0]);
+                    UserDAO.global.DeleteAccount((string)_currentselection[0]);
 
-                    if (_head.Account == (string)_currentselection[0])
+                    if (Main.get.Account == (string)_currentselection[0])
                     {
-                        _head.SwitchScene("res://Login Page/Login.tscn");
+                        Main.get.SwitchScene("res://Login Page/Login.tscn");
                     }
 
                     break;
 
                 case 1:
-                    PlayerDAO pdao = new PlayerDAO();
 
-                    pdao.DeletePlayer((string)_currentselection[0], (int)_currentselection[1]);
+                    PlayerDAO.global.DeletePlayer((string)_currentselection[0], (int)_currentselection[1]);
 
                     break;
 
                 case 2:
-                    RoomDAO rdao = new RoomDAO();
 
-                    rdao.KillRoom((int)_currentselection[0]);
+                    RoomDAO.global.KillRoom((int)_currentselection[0]);
 
                     break;
 
@@ -133,7 +127,7 @@ namespace DATGame
 
         public void _Back_Button_Clicked()
         {
-            _head.SwitchScene("res://Room Select Page/Room Select.tscn");
+            Main.get.SwitchScene("res://Room Select Page/Room Select.tscn");
         }
 
     }

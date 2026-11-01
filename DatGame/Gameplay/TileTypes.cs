@@ -1,5 +1,3 @@
-using Godot;
-
 namespace DATGame
 {
     public static partial class TileTypes

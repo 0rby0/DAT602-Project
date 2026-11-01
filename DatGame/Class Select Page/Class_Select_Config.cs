@@ -6,18 +6,14 @@ namespace DATGame
     {
         public override void _Ready()
         {
-            Main head = GetNode<Main>("/root/Main");
-
-            GetNode<Label>("CanvasLayer/Rows/lblRoomName").Text = head.RoomName;
+            GetNode<Label>("CanvasLayer/Rows/lblRoomName").Text = Main.get.RoomName;
         }
 
         public void _Back_Button_Clicked()
         {
-            Main head = GetNode<Main>("/root/Main");
-
-            head.Room = -1;
-            head.RoomName = "";
-            head.SwitchScene("res://Room Select Page/Room Select.tscn");
+            Main.get.Room = -1;
+            Main.get.RoomName = "";
+            Main.get.SwitchScene("res://Room Select Page/Room Select.tscn");
         }
     }
 }

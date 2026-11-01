@@ -20,12 +20,10 @@ namespace DATGame
 
         public void _Join_Button_Clicked()
         {
-            Main head = GetNode<Main>("/root/Main");
+            Main.get.Room = _id;
+            Main.get.RoomName = _roomname;
 
-            head.Room = _id;
-            head.RoomName = _roomname;
-
-            head.SwitchScene("res://Class Select Page/Class Select.tscn");
+            Main.get.SwitchScene("res://Class Select Page/Class Select.tscn");
         }
 
     }

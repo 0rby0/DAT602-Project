@@ -23,16 +23,13 @@ namespace DATGame
 
         public void _Class_Clicked()
         {
-            Main head = GetNode<Main>("/root/Main");
-            PlayerDAO dao = new PlayerDAO();
-
-            if (dao.JoinGame(head.Account, head.Room, _classname) == "Tile occupied")
+            if (PlayerDAO.global.JoinGame(Main.get.Account, Main.get.Room, _classname) == "Tile occupied")
             {
-                head.SwitchScene("res://Respawn Menu/Respawn Menu.tscn");
+                Main.get.SwitchScene("res://Respawn Menu/Respawn Menu.tscn");
             }
             else
             {
-                head.SwitchScene("res://Gameplay/Gameplay.tscn");
+                Main.get.SwitchScene("res://Gameplay/Gameplay.tscn");
             }
 
         }

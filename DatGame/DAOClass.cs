@@ -10,9 +10,10 @@ namespace DATGame
 	{
 		protected PackedScene popup = GD.Load<PackedScene>("res://Error Popup/Error Popup.tscn");
 
-	   protected MySqlConnection _connection;
+	    static MySqlConnection _gconnection;
+        protected MySqlConnection _connection;
 
-		public DAOClass()
+        public DAOClass()
 		{
 			try
 			{
@@ -23,7 +24,8 @@ namespace DATGame
 				 * User: root
 				 */
 
-				_connection = new MySqlConnection("Server=localhost;Port=3306;Database=gamedb;Uid=root;Pwd=Password123;");
+				DAOClass._gconnection = new MySqlConnection("Server=localhost;Port=3306;Database=gamedb;Uid=root;Pwd=Password123;");
+                _connection = DAOClass._gconnection;
 			}
 			catch
 			{
@@ -33,14 +35,25 @@ namespace DATGame
 			}
 		}
 
+        public void ShowPopup(string error)
+        {
+            PopupPanel _popup = (PopupPanel)popup.Instantiate();
+            popup_handler _conf = (popup_handler)_popup;
+            _conf.ErrorMessage = error;
+            Main.get.AddChild(_popup);
+        }
+
 	}
 
 	// Any database calls related to user account management
 	internal partial class UserDAO : DAOClass
-	{
+    {
+        // Create a pseudo-singleton
+        public static UserDAO global = new();
 
-		// Send a login request to the server and pass the response back to the GUI
-		public string Login(string username, string password)
+
+        // Send a login request to the server and pass the response back to the GUI
+        public string Login(string username, string password)
 		{
 			try
 			{
@@ -51,7 +64,7 @@ namespace DATGame
 				string response = "!-~-ERR-~-!";
 
 				// Create the command to call the login function on the database
-				MySqlCommand command = new MySqlCommand($"CALL Login('{username}', '{password}');", _connection);
+				MySqlCommand command = new($"CALL Login('{username}', '{password}');", _connection);
 
 				// Executes the command and uses the result
 				using (MySqlDataReader reader = command.ExecuteReader())
@@ -88,7 +101,7 @@ namespace DATGame
 
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Create_Account('{username}', '{password}');", _connection);
+				MySqlCommand command = new($"CALL Create_Account('{username}', '{password}');", _connection);
 
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
@@ -103,10 +116,7 @@ namespace DATGame
 
 			catch (Exception e)
 			{
-				Popup _popup = (Popup)popup.Instantiate();
-				popup_handler _conf = (popup_handler)_popup;
-				_conf.ErrorMessage = e.Message;
-				AddChild(_popup);
+				ShowPopup(e.Message);
 
 				return "";
 			}
@@ -118,18 +128,18 @@ namespace DATGame
 		}
 
 		public Dictionary GetAccount(string accountname)
-		{
-			try
-			{
-				Dictionary response = new Dictionary();
+        {
+            Dictionary response = [];
 
+            try
+			{
 				// Add the username to the dictionary for clarity
 				response["Name"] = accountname;
 
 				_connection.Open();
 
 				// Do a raw SQL call to get the non-confidential information from the database
-				MySqlCommand command = new MySqlCommand($"SELECT `LoginAttempts`,`Locked`, `Admin` FROM `account` WHERE AccountName = '{accountname}' LIMIT 1;", _connection);
+				MySqlCommand command = new($"SELECT `LoginAttempts`,`Locked`, `Admin` FROM `account` WHERE AccountName = '{accountname}' LIMIT 1;", _connection);
 
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
@@ -147,7 +157,7 @@ namespace DATGame
 							}
 
 							// If the value is an unsigned int (What the database returns for a bit)
-							else if (reader.GetValue(i) is UInt64)
+							else if (reader.GetValue(i) is UInt64 v)
 							{
 								
 								// C# doesn't like converting UInts to bools so this does that manually if possible
@@ -161,7 +171,7 @@ namespace DATGame
 										break;
 
 									default:
-										UInt64 val = (UInt64)reader.GetValue(i);
+										UInt64 val = v;
 										response[reader.GetName(i)] = Variant.From<UInt64>(val);
 										break;
 								}
@@ -179,7 +189,13 @@ namespace DATGame
 				return response;
 			}
 
-			finally
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+				return response;
+            }
+
+            finally
 			{
 				_connection.Close();
 			}
@@ -191,16 +207,13 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Delete_Account('{username}', 1);", _connection);
+				MySqlCommand command = new($"CALL Delete_Account('{username}', 1);", _connection);
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -211,41 +224,44 @@ namespace DATGame
 
 		public Godot.Collections.Array GetAccounts()
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand("SELECT AccountName FROM `account`;", _connection);
+				MySqlCommand command = new("SELECT AccountName FROM `account`;", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary player = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary player = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is string vals)
-							{
-								player[reader.GetName(i)] = Variant.From(vals);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is string vals)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(player);
-					}
-				}
-			}
+                    output.Add(player);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -271,16 +287,13 @@ namespace DATGame
 					lockedi = 1;
 				}
 
-				MySqlCommand command = new MySqlCommand($"CALL Update_Account('{username}', {admini}, {lockedi});", _connection);
+				MySqlCommand command = new($"CALL Update_Account('{username}', {admini}, {lockedi});", _connection);
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -294,25 +307,31 @@ namespace DATGame
 	// Any database calls related to room management
 	internal partial class RoomDAO : DAOClass
 	{
-		public bool HasRooms(string username)
+        // Create a pseudo-singleton
+        public static RoomDAO global = new();
+
+        public bool HasRooms(string username)
 		{
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Owned_Rooms('{username}');", _connection);
+				MySqlCommand command = new($"CALL Get_Owned_Rooms('{username}');", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						return reader.HasRows;
-					}
-				}
-			}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    return reader.HasRows;
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -321,47 +340,50 @@ namespace DATGame
 
 		public Dictionary GetRoomInfo(int room)
 		{
-			Dictionary output = new Dictionary();
+			Dictionary output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Room({room});", _connection);
+				MySqlCommand command = new($"CALL Get_Room({room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								output[reader.GetName(i)] = Variant.From(vali);
-							}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is Int64 vali64)
-							{
-								output[reader.GetName(i)] = Variant.From(vali64);
-							}
+                        else if (reader.GetValue(i) is Int64 vali64)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vali64);
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								output[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
-					}
-				}
-			}
+                    }
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -370,47 +392,50 @@ namespace DATGame
 
 		public Dictionary GetRoom(string username)
 		{
-			Dictionary output = new Dictionary();
+			Dictionary output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Owned_Rooms('{username}');", _connection);
+				MySqlCommand command = new($"CALL Get_Owned_Rooms('{username}');", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								output[reader.GetName(i)] = Variant.From(vali);
-							}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is Int64 vali64)
-							{
-								output[reader.GetName(i)] = Variant.From(vali64);
-							}
+                        else if (reader.GetValue(i) is Int64 vali64)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vali64);
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								output[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            output[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
-					}
-				}
-			}
+                    }
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -419,51 +444,54 @@ namespace DATGame
 
 		public Godot.Collections.Array GetRooms()
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand("CALL Get_Rooms();", _connection);
-				
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary room = new Dictionary();
-						
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								room[reader.GetName(i)] = Variant.From(vali);
-							}
+				MySqlCommand command = new("CALL Get_Rooms();", _connection);
 
-							else if (reader.GetValue(i) is Int64 vali64)
-							{
-								room[reader.GetName(i)] = Variant.From(vali64);
-							}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary room = [];
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								room[reader.GetName(i)] = Variant.From(vals);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            room[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else if (reader.GetValue(i) is Int64 vali64)
+                        {
+                            room[reader.GetName(i)] = Variant.From(vali64);
+                        }
 
-						}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            room[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-						output.Add(room);
-					}
-				}
-			}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-			finally
-			{
+                    }
+
+                    output.Add(room);
+                }
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -476,17 +504,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Create_Room('{roomname}', '{accountname}');", _connection);
+				MySqlCommand command = new($"CALL Create_Room('{roomname}', '{accountname}');", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -501,17 +526,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Kill_Room({roomid})", _connection);
+				MySqlCommand command = new($"CALL Kill_Room({roomid})", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -525,19 +547,27 @@ namespace DATGame
 	// Any database calls that manage player entries
 	internal partial class PlayerDAO : DAOClass
 	{
-		public void Attack(int ability)
+        // Create a pseudo-singleton
+        public static PlayerDAO global = new();
+
+        public void Attack(int ability)
 		{
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Attack({ability});", _connection);
+				MySqlCommand command = new($"CALL Attack({ability});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -548,13 +578,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Exit_Room('{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Exit_Room('{account}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -565,21 +600,26 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Primary_Player({room});", _connection);
+				MySqlCommand command = new($"CALL Get_Primary_Player({room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						return (string)reader.GetValue(0);
-					}
-				}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    return (string)reader.GetValue(0);
+                }
 
-				return "";
+                return "";
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+
+                return "";
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -603,17 +643,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Transfer_Abilities({id1i}, {id2i}, '{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Transfer_Abilities({id1i}, {id2i}, '{account}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -628,13 +665,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Replenish_Energy('{username}', {room});", _connection);
+				MySqlCommand command = new($"CALL Replenish_Energy('{username}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -645,19 +687,22 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Player_Energy('{username}', {room});", _connection);
+				MySqlCommand command = new($"CALL Get_Player_Energy('{username}', {room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						return (int)reader.GetValue(0);
-					}
-				}
-			}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    return (int)reader.GetValue(0);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -666,65 +711,68 @@ namespace DATGame
 
 		public Godot.Collections.Array GetInventory(string account, int room)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Inventory('{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Get_Inventory('{account}', {room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary item = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary item = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								item[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            item[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is UInt64 vali64)
-							{
-								switch (reader.GetValue(i))
-								{
-									case (UInt64)0:
-										item[reader.GetName(i)] = Variant.From<bool>(false);
-										break;
+                        else if (reader.GetValue(i) is UInt64 vali64)
+                        {
+                            switch (reader.GetValue(i))
+                            {
+                                case (UInt64)0:
+                                    item[reader.GetName(i)] = Variant.From<bool>(false);
+                                    break;
 
-									case (UInt64)1:
-										item[reader.GetName(i)] = Variant.From<bool>(true);
-										break;
+                                case (UInt64)1:
+                                    item[reader.GetName(i)] = Variant.From<bool>(true);
+                                    break;
 
-									default:
-										UInt64 val = (UInt64)reader.GetValue(i);
-										item[reader.GetName(i)] = Variant.From<UInt64>(val);
-										break;
-								}
-							}
+                                default:
+                                    UInt64 val = (UInt64)reader.GetValue(i);
+                                    item[reader.GetName(i)] = Variant.From<UInt64>(val);
+                                    break;
+                            }
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								item[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            item[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(item);
-					}
-				}
-			}
+                    output.Add(item);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -737,17 +785,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Update_Player('{account}', {room}, {currentscore}, {highscore});", _connection);
+				MySqlCommand command = new($"CALL Update_Player('{account}', {room}, {currentscore}, {highscore});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -762,17 +807,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Delete_Player('{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Delete_Player('{account}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -787,13 +829,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Rejoin_At('{tile}', '{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Rejoin_At('{tile}', '{account}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -806,26 +853,29 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Join_Room('{account}', {room}, '{classname}');", _connection);
+				MySqlCommand command = new($"CALL Join_Room('{account}', {room}, '{classname}');", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						if (reader.GetValue(0) is string vals)
-						{
-							output = vals;
-						}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (reader.GetValue(0) is string vals)
+                    {
+                        output = vals;
+                    }
 
-						else
-						{
-							output = "returned non string";
-						}
-					}
-				}
-			}
+                    else
+                    {
+                        output = "returned non string";
+                    }
+                }
+            }
 
-			finally
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
             {
                 _connection.Close();
             }
@@ -835,51 +885,54 @@ namespace DATGame
 
 		public Godot.Collections.Array GetPlayers()
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand("CALL Get_Players();", _connection);
+				MySqlCommand command = new("CALL Get_Players();", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary player = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary player = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								player[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is Int64 vali64)
-							{
-								player[reader.GetName(i)] = Variant.From(vali64);
-							}
+                        else if (reader.GetValue(i) is Int64 vali64)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vali64);
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								player[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(player);
-					}
-				}
-			}
+                    output.Add(player);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -888,13 +941,13 @@ namespace DATGame
 
 		public Dictionary GetPlayer(string account, int room)
 		{
-			Dictionary output = new Dictionary();
+			Dictionary output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Player('{account}', {room});", _connection);
+				MySqlCommand command = new($"CALL Get_Player('{account}', {room});", _connection);
 
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
@@ -926,20 +979,23 @@ namespace DATGame
 					}
 				}
 
-				MySqlCommand command2 = new MySqlCommand($"CALL Get_Statistics('{account}', {room});", _connection);
+				MySqlCommand command2 = new($"CALL Get_Statistics('{account}', {room});", _connection);
 
-				using (MySqlDataReader reader2 = command2.ExecuteReader())
-				{
-					while (reader2.Read())
-					{
-						output[Variant.From((string)reader2.GetValue(0))] = Variant.From((int)reader2.GetValue(1));
-					}
-				}
+                using MySqlDataReader reader2 = command2.ExecuteReader();
+                while (reader2.Read())
+                {
+                    output[Variant.From((string)reader2.GetValue(0))] = Variant.From((int)reader2.GetValue(1));
+                }
 
-			}
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -952,19 +1008,22 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"SELECT Get_Score('{account}', {room});", _connection);
+				MySqlCommand command = new($"SELECT Get_Score('{account}', {room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						return (int)reader.GetValue(0);
-					}
-				}
-			}
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    return (int)reader.GetValue(0);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -973,51 +1032,54 @@ namespace DATGame
 
 		public Godot.Collections.Array GetLeaderboard(int room)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Leaderboard({room});", _connection);
+				MySqlCommand command = new($"CALL Get_Leaderboard({room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary player = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary player = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								player[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is Int64 vali64)
-							{
-								player[reader.GetName(i)] = Variant.From(vali64);
-							}
+                        else if (reader.GetValue(i) is Int64 vali64)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vali64);
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								player[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            player[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(player);
-					}
-				}
-			}
+                    output.Add(player);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -1028,43 +1090,49 @@ namespace DATGame
 	// Any database calls invloving the map
 	internal partial class MapDAO : DAOClass
 	{
-		public Godot.Collections.Array GetAvailableTiles(int room)
+        // Create a pseudo-singleton
+        public static MapDAO global = new();
+
+        public Godot.Collections.Array GetAvailableTiles(int room)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Available_Tiles({room});", _connection);
+				MySqlCommand command = new($"CALL Get_Available_Tiles({room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary tile = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary tile = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								tile[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            tile[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(tile);
-					}
-				}
-			}
+                    output.Add(tile);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -1077,17 +1145,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Glitch_Ability({room});", _connection);
+				MySqlCommand command = new($"CALL Glitch_Ability({room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -1102,13 +1167,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Engage_Combat('{username}', {room}, {player});", _connection);
+				MySqlCommand command = new($"CALL Engage_Combat('{username}', {room}, {player});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -1119,13 +1189,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Disengage_Combat('{username}', {room});", _connection);
+				MySqlCommand command = new($"CALL Disengage_Combat('{username}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -1143,17 +1218,14 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Move_Player('{username}', {room}, {x}, {y}, {range}, {idiagonal});", _connection);
+				MySqlCommand command = new($"CALL Move_Player('{username}', {room}, {x}, {y}, {range}, {idiagonal});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
 			catch (Exception e)
             {
-                Popup _popup = (Popup)popup.Instantiate();
-                popup_handler _conf = (popup_handler)_popup;
-                _conf.ErrorMessage = e.Message;
-                AddChild(_popup);
+                ShowPopup(e.Message);
             }
 
 			finally
@@ -1164,65 +1236,68 @@ namespace DATGame
 
 		public Godot.Collections.Array GetTileInventory(string username, int room, int xrange, int yrange)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Tile_Inventory('{username}', {room}, {xrange}, {yrange});", _connection);
+				MySqlCommand command = new($"CALL Get_Tile_Inventory('{username}', {room}, {xrange}, {yrange});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary ability = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary ability = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								ability[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            ability[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is UInt64 vali64)
-							{
-								switch (reader.GetValue(i))
-								{
-									case (UInt64)0:
-										ability[reader.GetName(i)] = Variant.From(false);
-										break;
+                        else if (reader.GetValue(i) is UInt64 vali64)
+                        {
+                            switch (reader.GetValue(i))
+                            {
+                                case (UInt64)0:
+                                    ability[reader.GetName(i)] = Variant.From(false);
+                                    break;
 
-									case (UInt64)1:
-										ability[reader.GetName(i)] = Variant.From(true);
-										break;
+                                case (UInt64)1:
+                                    ability[reader.GetName(i)] = Variant.From(true);
+                                    break;
 
-									default:
-										UInt64 val = (UInt64)reader.GetValue(i);
-										ability[reader.GetName(i)] = Variant.From(val);
-										break;
-								}
-							}
+                                default:
+                                    UInt64 val = (UInt64)reader.GetValue(i);
+                                    ability[reader.GetName(i)] = Variant.From(val);
+                                    break;
+                            }
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								ability[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            ability[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(ability);
-					}
-				}
-			}
+                    output.Add(ability);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -1231,69 +1306,72 @@ namespace DATGame
 
 		public Godot.Collections.Array GetMapSnapshot(string username, int room, int viewradius)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Map_Snapshot('{username}', {room}, {viewradius});", _connection);
+				MySqlCommand command = new($"CALL Get_Map_Snapshot('{username}', {room}, {viewradius});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary tile = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary tile = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is int vali)
-							{
-								tile[reader.GetName(i)] = Variant.From(vali);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is int vali)
+                        {
+                            tile[reader.GetName(i)] = Variant.From(vali);
+                        }
 
-							else if (reader.GetValue(i) is UInt64 vali64)
-							{
-								switch (reader.GetValue(i))
-								{
-									case (UInt64)0:
-										tile[reader.GetName(i)] = Variant.From(false);
-										break;
+                        else if (reader.GetValue(i) is UInt64 vali64)
+                        {
+                            switch (reader.GetValue(i))
+                            {
+                                case (UInt64)0:
+                                    tile[reader.GetName(i)] = Variant.From(false);
+                                    break;
 
-									case (UInt64)1:
-										tile[reader.GetName(i)] = Variant.From(true);
-										break;
+                                case (UInt64)1:
+                                    tile[reader.GetName(i)] = Variant.From(true);
+                                    break;
 
-									default:
-										UInt64 val = (UInt64)reader.GetValue(i);
-										tile[reader.GetName(i)] = Variant.From(val);
-										break;
-								}
-							}
+                                default:
+                                    UInt64 val = (UInt64)reader.GetValue(i);
+                                    tile[reader.GetName(i)] = Variant.From(val);
+                                    break;
+                            }
+                        }
 
-							else if (reader.GetValue(i) is string vals)
-							{
-								tile[reader.GetName(i)] = Variant.From(vals);
-							}
+                        else if (reader.GetValue(i) is string vals)
+                        {
+                            tile[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else if (reader.GetValue(i) is DBNull valsn)
-							{
-								tile[reader.GetName(i)] = "";
-							}
+                        else if (reader.GetValue(i) is DBNull valsn)
+                        {
+                            tile[reader.GetName(i)] = "";
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
-						}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
+                    }
 
-						output.Add(tile);
-					}
-				}
-			}
+                    output.Add(tile);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -1305,43 +1383,49 @@ namespace DATGame
 	// Any database calls involving the in game chat system
 	internal partial class ChatDAO : DAOClass
 	{
-		public Godot.Collections.Array GetMessages(int room)
+        // Create a pseudo-singleton
+        public static ChatDAO global = new();
+
+        public Godot.Collections.Array GetMessages(int room)
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Get_Messages({room});", _connection);
+				MySqlCommand command = new($"CALL Get_Messages({room});", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary message = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary message = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							if (reader.GetValue(i) is string vals)
-							{
-								message[reader.GetName(i)] = Variant.From(vals);
-							}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetValue(i) is string vals)
+                        {
+                            message[reader.GetName(i)] = Variant.From(vals);
+                        }
 
-							else
-							{
-								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-							}
+                        else
+                        {
+                            GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+                        }
 
-						}
+                    }
 
-						output.Add(message);
-					}
-				}
-			}
+                    output.Add(message);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 
@@ -1354,13 +1438,18 @@ namespace DATGame
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand($"CALL Send_Message('{message}', '{username}', {room});", _connection);
+				MySqlCommand command = new($"CALL Send_Message('{message}', '{username}', {room});", _connection);
 
 				command.ExecuteNonQuery();
 			}
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 		}
@@ -1370,34 +1459,40 @@ namespace DATGame
 	// Any database calls to get system/base information
 	internal partial class GameDAO : DAOClass
 	{
-		public Godot.Collections.Array GetClasses()
+        // Create a pseudo-singleton
+        public static GameDAO global = new();
+
+        public Godot.Collections.Array GetClasses()
 		{
-			Godot.Collections.Array output = new Godot.Collections.Array();
+			Godot.Collections.Array output = [];
 
 			try
 			{
 				_connection.Open();
 
-				MySqlCommand command = new MySqlCommand("SELECT * FROM class;", _connection);
+				MySqlCommand command = new("CALL Get_Classes()", _connection);
 
-				using (MySqlDataReader reader = command.ExecuteReader())
-				{
-					while (reader.Read())
-					{
-						Dictionary info = new Dictionary();
+                using MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Dictionary info = [];
 
-						for (int i = 0; i < reader.FieldCount; i++)
-						{
-							info[reader.GetName(i)] = Variant.From((string)reader.GetValue(i));
-						}
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        info[reader.GetName(i)] = Variant.From((string)reader.GetValue(i));
+                    }
 
-						output.Add(info);
-					}
-				}
-			}
+                    output.Add(info);
+                }
+            }
 
-			finally
-			{
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
 				_connection.Close();
 			}
 

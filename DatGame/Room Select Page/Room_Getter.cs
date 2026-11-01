@@ -12,15 +12,12 @@ namespace DATGame
 
         public void RefreshRooms()
         {
-            RoomDAO dao = new RoomDAO();
-            Main head = GetNode<Main>("/root/Main");
-
             foreach (Node child in GetChildren())
             {
                 child.QueueFree();
             }
 
-            Array rooms = dao.GetRooms();
+            Array rooms = RoomDAO.global.GetRooms();
 
             foreach (Dictionary room in rooms)
             {

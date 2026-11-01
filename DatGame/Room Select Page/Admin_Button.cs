@@ -6,9 +6,7 @@ namespace DATGame
     {
         public void _Admin_Button_Clicked()
         {
-            Main head = GetNode<Main>("/root/Main");
-
-            head.SwitchScene("res://Admin Page/Admin Centre.tscn");
+            Main.get.SwitchScene("res://Admin Page/Admin Centre.tscn");
         }
 
     }

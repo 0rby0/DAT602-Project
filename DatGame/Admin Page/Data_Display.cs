@@ -30,9 +30,6 @@ public partial class Data_Display : VBoxContainer
     private bool _editing = false;
     public bool Editing { set => _editing = value; }
 
-    private UserDAO _udao = new UserDAO();
-    private PlayerDAO _pdao = new PlayerDAO();
-
     public override void _Ready()
 	{
         base._Ready();
@@ -82,11 +79,11 @@ public partial class Data_Display : VBoxContainer
             switch (_conf.View)
             {
                 case 0:
-                    _udao.UpdateAccount((string)_currentdata[0], _admintoggle.ButtonPressed, _lockedtoggle.ButtonPressed);
+                    UserDAO.global.UpdateAccount((string)_currentdata[0], _admintoggle.ButtonPressed, _lockedtoggle.ButtonPressed);
                     break;
 
                 case 1:
-                    _pdao.UpdatePlayer((string)_currentdata[0], (int)_currentdata[1], (int)_highselect.Value, (int)_currentselect.Value);
+                    PlayerDAO.global.UpdatePlayer((string)_currentdata[0], (int)_currentdata[1], (int)_highselect.Value, (int)_currentselect.Value);
                     break;
 
                 default:
@@ -144,9 +141,8 @@ public partial class Data_Display : VBoxContainer
             switch (_conf.View)
             {
                 case 0:
-                    UserDAO udao = new UserDAO();
 
-                    Dictionary accountdata = udao.GetAccount((string)_currentdata[0]);
+                    Dictionary accountdata = UserDAO.global.GetAccount((string)_currentdata[0]);
 
                     _lockedtoggle.ButtonPressed = (bool)accountdata["Locked"];
                     _admintoggle.ButtonPressed = (bool)accountdata["Admin"];
@@ -154,9 +150,8 @@ public partial class Data_Display : VBoxContainer
                     break;
 
                 case 1:
-                    PlayerDAO pdao = new PlayerDAO();
 
-                    Dictionary playerdata = pdao.GetPlayer((string)_currentdata[0], (int)_currentdata[1]);
+                    Dictionary playerdata = PlayerDAO.global.GetPlayer((string)_currentdata[0], (int)_currentdata[1]);
 
                     _highselect.Value = (int)playerdata["HighScore"];
                     _currentselect.Value = (int)playerdata["CurrentScore"];
@@ -171,9 +166,8 @@ public partial class Data_Display : VBoxContainer
         switch (_conf.View)
         {
             case 0:
-                UserDAO udao = new UserDAO();
 
-                Dictionary accountdata = udao.GetAccount((string)_currentdata[0]);
+                Dictionary accountdata = UserDAO.global.GetAccount((string)_currentdata[0]);
 
                 _accountname.Text = $"Selected Account | {(string)accountdata["Name"]}";
                 _accountlocked.Text = $"Account Locked | {(string)accountdata["Locked"]}";
@@ -182,9 +176,8 @@ public partial class Data_Display : VBoxContainer
                 break;
 
             case 1:
-                PlayerDAO pdao = new PlayerDAO();
 
-                Dictionary playerdata = pdao.GetPlayer((string)_currentdata[0], (int)_currentdata[1]);
+                Dictionary playerdata = PlayerDAO.global.GetPlayer((string)_currentdata[0], (int)_currentdata[1]);
 
                 _playername.Text = $"Selected Player | {(string)playerdata["AccountName"]}";
                 _playerroom.Text = $"Room | {(string)playerdata["RoomName"]}";
@@ -194,9 +187,8 @@ public partial class Data_Display : VBoxContainer
                 break;
 
             case 2:
-                RoomDAO rdao = new RoomDAO();
 
-                Dictionary roomdata = rdao.GetRoomInfo((int)_currentdata[0]);
+                Dictionary roomdata = RoomDAO.global.GetRoomInfo((int)_currentdata[0]);
 
                 _roomname.Text = $"Selected Room | {(string)roomdata["RoomName"]}";
                 _roomtop.Text = $"Top Player | {(string)roomdata["AccountName"]}";

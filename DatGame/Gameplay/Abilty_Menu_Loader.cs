@@ -5,35 +5,31 @@ namespace DATGame
 {
     public partial class Abilty_Menu_Loader : HBoxContainer
     {
-        private Main _head;
-        private PlayerDAO _dao = new PlayerDAO();
-
         private Label _gaugetext;
         private HBoxContainer _abilitybuttons;
 
         public override void _Ready()
         {
-            _head = GetNode<Main>("/root/Main");
             _gaugetext = GetNode<Label>("lblEnergy");
             _abilitybuttons = GetNode<HBoxContainer>("Ability Buttons");
         }
 
         public void _ReplenishEnergy()
         {
-            _dao.ReplenishEnergy(_head.Account, _head.Room);
+            PlayerDAO.global.ReplenishEnergy(Main.get.Account, Main.get.Room);
             UpdateEnergyGaugeDisplay();
         }
 
         public void UpdateEnergyGaugeDisplay()
         {
-            int energy = _dao.GetEnergy(_head.Account, _head.Room);
+            int energy = PlayerDAO.global.GetEnergy(Main.get.Account, Main.get.Room);
 
             _gaugetext.Text = $"{energy} / 20";
         }
 
         public void UpdateAbilityButtons()
         {
-            Array inventory = _dao.GetInventory(_head.Account, _head.Room);
+            Array inventory = PlayerDAO.global.GetInventory(Main.get.Account, Main.get.Room);
             Array usables = [];
 
             foreach (Dictionary ability in inventory)

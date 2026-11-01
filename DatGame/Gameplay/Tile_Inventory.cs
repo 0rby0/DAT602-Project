@@ -5,23 +5,19 @@ namespace DATGame
 {
     public partial class Tile_Inventory : VBoxContainer
     {
-        private Main _head;
         private bool _ontoprow = true;
 
         public override void _Ready()
         {
             base._Ready();
 
-            _head = GetNode<Main>("/root/Main");
-
             LoadTileInventory();
         }
 
         public void LoadTileInventory()
         {
-            MapDAO dao = new MapDAO();
 
-            Array tileabilities = dao.GetTileInventory(_head.Account, _head.Room, 0, 0);
+            Array tileabilities = MapDAO.global.GetTileInventory(Main.get.Account, Main.get.Room, 0, 0);
 
             HBoxContainer toprow = GetNode<HBoxContainer>("Top Row");
             HBoxContainer bottomrow = GetNode<HBoxContainer>("Bottom Row");

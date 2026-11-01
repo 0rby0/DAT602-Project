@@ -5,7 +5,6 @@ namespace DATGame
 {
     public partial class Room_Box_Controls : Panel
     {
-        private Main _head;
         private VBoxContainer _infopanel;
         private VBoxContainer _creationpanel;
         private VBoxContainer _killpanel;
@@ -15,8 +14,6 @@ namespace DATGame
         {
             base._Ready();
 
-            _head = GetNode<Main>("/root/Main");
-
             _infopanel = GetNode<VBoxContainer>("RoomInfo");
             _creationpanel = GetNode<VBoxContainer>("RoomCreation");
             _killpanel = GetNode<VBoxContainer>("RoomKill");
@@ -25,7 +22,7 @@ namespace DATGame
 
         public void _Join_Room_Clicked()
         {
-            _head.SwitchScene("res://Class Select Page/Class Select.tscn");
+            Main.get.SwitchScene("res://Class Select Page/Class Select.tscn");
         }
 
         public void _Kill_Room_Clicked()
@@ -36,16 +33,14 @@ namespace DATGame
 
         public void _Confirm_Creation_Clicked()
         {
-            RoomDAO dao = new RoomDAO();
-
             string roomname = _creationpanel.GetNode<LineEdit>("txtNameInput").Text;
 
-            dao.CreateRoom(roomname, _head.Account);
+            RoomDAO.global.CreateRoom(roomname, Main.get.Account);
 
-            Dictionary room_details = dao.GetRoom(_head.Account);
+            Dictionary room_details = RoomDAO.global.GetRoom(Main.get.Account);
 
-            _head.Room = (int)room_details["RoomID"];
-            _head.RoomName = (string)room_details["RoomName"];
+            Main.get.Room = (int)room_details["RoomID"];
+            Main.get.RoomName = (string)room_details["RoomName"];
 
             _infopanel.Visible = true;
             _creationpanel.Visible = false;
@@ -61,9 +56,7 @@ namespace DATGame
 
         public void _Confirm_Replace_Clicked()
         {
-            RoomDAO dao = new RoomDAO();
-
-            dao.KillRoom(_head.Room);
+            RoomDAO.global.KillRoom(Main.get.Room);
 
             _replacepanel.Visible = false;
             _creationpanel.Visible = true;
@@ -71,9 +64,7 @@ namespace DATGame
 
         public void _Confirm_Kill_Clicked()
         {
-            RoomDAO dao = new RoomDAO();
-
-            dao.KillRoom(_head.Room);
+            RoomDAO.global.KillRoom(Main.get.Room);
 
             _killpanel.Visible = false;
         }
@@ -83,9 +74,7 @@ namespace DATGame
             _killpanel.Visible = false;
             _replacepanel.Visible = false;
 
-            RoomDAO dao = new RoomDAO();
-
-            if (dao.HasRooms(_head.Account))
+            if (RoomDAO.global.HasRooms(Main.get.Account))
             {
                 _infopanel.Visible = true;
                 _creationpanel.Visible = false;

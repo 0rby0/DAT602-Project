@@ -5,8 +5,6 @@ namespace DATGame
 {
     public partial class Login_Handler : Control
     {
-        private UserDAO dao = new UserDAO();
-
         VBoxContainer logincontrols;
         VBoxContainer lock_msg;
         Label attempt_text;
@@ -16,8 +14,6 @@ namespace DATGame
         public override void _Ready()
         {
             base._Ready();
-
-            Main main = GetNode<Main>("/root/Main");
 
             Control head = GetNode<Control>("CanvasLayer/Container");
 
@@ -31,7 +27,7 @@ namespace DATGame
         {
             base._Process(delta);
 
-            Dictionary attempteduserdetails = dao.GetAccount(_attemptedaccount);
+            Dictionary attempteduserdetails = UserDAO.global.GetAccount(_attemptedaccount);
 
             if (attempteduserdetails.Keys.Count == 1)
             {
@@ -48,8 +44,6 @@ namespace DATGame
 
         internal void _Submit_Button_Clicked()
         {
-            Main main = GetNode<Main>("/root/Main");
-
             Control head = GetNode<Control>("CanvasLayer/Container");
 
             VBoxContainer accountpopup = head.GetNode<VBoxContainer>("New Account Controls");
@@ -62,11 +56,12 @@ namespace DATGame
 
             _attemptedaccount = uname;
 
-            string login_result = dao.Login(uname, pword);
+            string login_result = UserDAO.global.Login(uname, pword);
             if (login_result =="Login success")
             {
-                main.Account = uname;
-                main.SwitchScene("res://Room Select Page/Room Select.tscn");
+                
+                Main.get.Account = uname;
+                Main.get.SwitchScene("res://Room Select Page/Room Select.tscn");
             }
             else if (login_result == "Something went wrong: Account not found")
             {
@@ -83,8 +78,6 @@ namespace DATGame
 
         internal void _Create_Confirm_Clicked()
         {
-            Main main = GetNode<Main>("/root/Main");
-
             Control head = GetNode<Control>("CanvasLayer/Container");
 
             VBoxContainer logincontrols = head.GetNode<VBoxContainer>("Login Controls");
@@ -95,11 +88,11 @@ namespace DATGame
 
             Label warninglabel = logincontrols.GetNode<Label>("lblWarning");
 
-            string creation_result = dao.CreateAccount(uname, pword);
+            string creation_result = UserDAO.global.CreateAccount(uname, pword);
             if (creation_result ==  "Account created successfully")
             {
-                main.Account = uname;
-                main.SwitchScene("res://Room Select Page/Room Select.tscn");
+                Main.get.Account = uname;
+                Main.get.SwitchScene("res://Room Select Page/Room Select.tscn");
             }
             else
             {
@@ -114,8 +107,6 @@ namespace DATGame
         
         internal void _Cancel_Creation()
         {
-            Main main = GetNode<Main>("/root/Main");
-
             Control head = GetNode<Control>("CanvasLayer/Container");
 
             VBoxContainer logincontrols = head.GetNode<VBoxContainer>("Login Controls");

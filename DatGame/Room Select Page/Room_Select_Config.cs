@@ -5,7 +5,6 @@ namespace DATGame
 {
 	public partial class Room_Select_Config : Control
 	{
-		private Main _head;
 		private HBoxContainer _panels;
 		private VBoxContainer _infopanel;
 		private VBoxContainer _creationpanel;
@@ -14,7 +13,6 @@ namespace DATGame
 
         public override void _Ready()
 		{
-			_head = GetNode<Main>("/root/Main");
 			_panels = GetNode<HBoxContainer>("CanvasLayer/Columns");
 
 			_infopanel = _panels.GetNode<VBoxContainer>("Column 2/pnlRoomBox/RoomInfo");
@@ -22,17 +20,14 @@ namespace DATGame
 			_killpanel = _panels.GetNode<VBoxContainer>("Column 2/pnlRoomBox/RoomKill");
 			_replacepanel = _panels.GetNode<VBoxContainer>("Column 2/pnlRoomBox/RoomReplace");
 
-			UserDAO udao = new UserDAO();
-			RoomDAO rdao = new RoomDAO();
+			Dictionary account_details = UserDAO.global.GetAccount(Main.get.Account);
 
-			Dictionary account_details = udao.GetAccount(_head.Account);
-
-			if (rdao.HasRooms(_head.Account))
+			if (RoomDAO.global.HasRooms(Main.get.Account))
             {
-                Dictionary room_details = rdao.GetRoom(_head.Account);
+                Dictionary room_details = RoomDAO.global.GetRoom(Main.get.Account);
 
-				_head.Room = (int)room_details["RoomID"];
-				_head.RoomName = (string)room_details["RoomName"];
+				Main.get.Room = (int)room_details["RoomID"];
+				Main.get.RoomName = (string)room_details["RoomName"];
 
 				_infopanel.Visible = true;
 				_infopanel.GetNode<Label>("lblName").Text = (string)room_details["RoomName"];
@@ -44,12 +39,10 @@ namespace DATGame
 		}
         public void _Create_Room_Clicked()
         {
-			RoomDAO dao = new RoomDAO();
-
 			_infopanel.Visible = false;
 			_killpanel.Visible = false;
 
-			if (dao.HasRooms(_head.Account))
+			if (RoomDAO.global.HasRooms(Main.get.Account))
 			{
 				_creationpanel.Visible = false;
 				_replacepanel.Visible = true;

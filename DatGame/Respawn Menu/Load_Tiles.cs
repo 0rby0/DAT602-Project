@@ -5,18 +5,14 @@ namespace DATGame
 {
     public partial class Load_Tiles : VBoxContainer
     {
-        Main _head;
-        MapDAO _dao = new MapDAO();
-
         public override void _Ready()
         {
-            _head = GetNode<Main>("/root/Main");
             _UpdateTileList();
         }
 
         public void _UpdateTileList()
         {
-            Array tiles = _dao.GetAvailableTiles(_head.Room);
+            Array tiles = MapDAO.global.GetAvailableTiles(Main.get.Room);
             Array tilebuttons = (Array)GetChildren();
 
             for (int rm = tilebuttons.Count; rm > tiles.Count; rm--)

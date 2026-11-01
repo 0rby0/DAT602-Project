@@ -2431,6 +2431,11 @@ BEGIN
 
 END//
 
+CREATE PROCEDURE Get_Classes ()
+BEGIN
+	SELECT * FROM class;
+END//
+
 DELIMITER ;
 
 CALL Generate_Database();

@@ -8,6 +8,7 @@ public partial class popup_handler : PopupPanel
 
     public override void _Ready()
     {
+        Popup();
         GetNode<Label>("Alignment/lblMessage").Text = $"Error: {errorMessage}";
     }
 

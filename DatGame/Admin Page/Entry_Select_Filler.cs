@@ -22,9 +22,8 @@ namespace DATGame
             switch (conf.View)
             {
                 case 0:
-                    UserDAO udao = new UserDAO();
 
-                    Array accountlist = udao.GetAccounts();
+                    Array accountlist = UserDAO.global.GetAccounts();
 
                     foreach (Dictionary account in accountlist)
                     {
@@ -42,9 +41,8 @@ namespace DATGame
                     break;
 
                 case 1:
-                    PlayerDAO pdao = new PlayerDAO();
 
-                    Array playerlist = pdao.GetPlayers();
+                    Array playerlist = PlayerDAO.global.GetPlayers();
 
                     foreach (Dictionary player in playerlist)
                     {
@@ -62,9 +60,8 @@ namespace DATGame
                     break;
 
                 case 2:
-                    RoomDAO rdao = new RoomDAO();
 
-                    Array roomlist = rdao.GetRooms();
+                    Array roomlist = RoomDAO.global.GetRooms();
 
                     foreach (Dictionary room in roomlist)
                     {

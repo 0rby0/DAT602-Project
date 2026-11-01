@@ -6,13 +6,10 @@ namespace DATGame
     public partial class Tile_Button_Config : Button
     {
         private Dictionary _info;
-        private Main _head;
 
         public override void _Ready()
         {
             base._Ready();
-
-            _head = GetNode<Main>("/root/Main");
         }
 
         public void UpdateContents(Dictionary Info)
@@ -29,11 +26,9 @@ namespace DATGame
 
         public void _TileSelected()
         {
-            PlayerDAO dao = new PlayerDAO();
+            PlayerDAO.global.Rejoin(Main.get.Account, Main.get.Room, (int)_info["TileID"]);
 
-            dao.Rejoin(_head.Account, _head.Room, (int)_info["TileID"]);
-
-            _head.SwitchScene("res://Gameplay/Gameplay.tscn");
+            Main.get.SwitchScene("res://Gameplay/Gameplay.tscn");
         }
 
     }

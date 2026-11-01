@@ -48,9 +48,7 @@ namespace DATGame
         {
             if ((bool)_info["Combat"] == true)
             {
-                PlayerDAO dao = new PlayerDAO();
-
-                dao.Attack((int)_info["AbilityID"]);
+                PlayerDAO.global.Attack((int)_info["AbilityID"]);
             }
         }
 

@@ -15,6 +15,10 @@ run/main_scene="uid://d2cgh8odbjgin"
 config/features=PackedStringArray("4.8", "C#", "Forward Plus")
 config/icon="uid://j5beh0ocisq1"
 
+[autoload]
+
+DaoClass="*uid://dx0ou5mfftv0y"
+
 [display]
 
 window/size/viewport_width=1280

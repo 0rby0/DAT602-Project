@@ -6,10 +6,8 @@ namespace DATGame
     {
         public void _Back_Button_Clicked()
         {
-            Main main = GetNode<Main>("/root/Main");
-
-            main.Account = null;
-            main.SwitchScene("res://Login Page/Login.tscn");
+            Main.get.Account = null;
+            Main.get.SwitchScene("res://Login Page/Login.tscn");
         }
     }
 }

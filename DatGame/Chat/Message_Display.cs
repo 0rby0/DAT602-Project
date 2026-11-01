@@ -5,22 +5,17 @@ namespace DATGame
 {
     public partial class Message_Display : RichTextLabel
     {
-        Main _head;
-
         public override void _Ready()
         {
             base._Ready();
-
-            _head = GetNode<Main>("/root/Main");
 
             RefreshChat();
         }
 
         public void RefreshChat()
         {
-            ChatDAO dao = new ChatDAO();
 
-            Array rawchat = dao.GetMessages(_head.Room);
+            Array rawchat = ChatDAO.global.GetMessages(Main.get.Room);
 
             string formattedchat = "";
 

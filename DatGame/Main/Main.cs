@@ -51,8 +51,11 @@ public partial class Main : Node
 	{
 		if (what == NotificationWMCloseRequest)
 		{
-			PlayerDAO dao = new PlayerDAO();
-			dao.ExitRoom(Account, Room);
+			if ((_account is not null) & (_roomID > 0))
+			{
+				PlayerDAO dao = new PlayerDAO();
+				dao.ExitRoom(_account, _roomID);
+			}
 			GetTree().Quit();
 		}
 	}

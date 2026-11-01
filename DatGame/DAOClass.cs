@@ -66,8 +66,7 @@ namespace DATGame
 
             catch (MySqlException e)
             {
-                GD.Print(e);
-                return "";
+                return $"Something went wrong: {e.Message}";
             }
 
 			finally

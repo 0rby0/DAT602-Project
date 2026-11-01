@@ -63,28 +63,21 @@ namespace DATGame
             _attemptedaccount = uname;
 
             string login_result = dao.Login(uname, pword);
-            switch (login_result)
+            if (login_result =="Login success")
             {
-                case "Login success":
-                    main.Account = uname;
-                    main.SwitchScene("res://Room Select Page/Room Select.tscn");
-                    break;
-
-                case "Login failed":
-                    warninglabel.Text = "Incorrect username or password";
-                    warninglabel.Visible = true;
-                    break;
-
-                case "Account not found":
-                    message.Text = $"Username '{uname}' does not exist.\nCreate new account?";
-                    logincontrols.Visible = false;
-                    accountpopup.Visible = true;
-                    break;
-
-                default:
-                    warninglabel.Text = $"Something went wrong: {login_result}";
-                    warninglabel.Visible = true;
-                    break;
+                main.Account = uname;
+                main.SwitchScene("res://Room Select Page/Room Select.tscn");
+            }
+            else if (login_result == "Something went wrong: Account not found")
+            {
+                message.Text = $"Username '{uname}' does not exist.\nCreate new account?";
+                logincontrols.Visible = false;
+                accountpopup.Visible = true;
+            }
+            else
+            {
+                warninglabel.Text = login_result;
+                warninglabel.Visible = true;
             }
         }
 
@@ -103,30 +96,19 @@ namespace DATGame
             Label warninglabel = logincontrols.GetNode<Label>("lblWarning");
 
             string creation_result = dao.CreateAccount(uname, pword);
-            switch (creation_result)
+            if (creation_result ==  "Account created successfully")
             {
-                case "Account created successfully":
-                    main.Account = uname;
-                    main.SwitchScene("res://Room Select Page/Room Select.tscn");
-                    break;
+                main.Account = uname;
+                main.SwitchScene("res://Room Select Page/Room Select.tscn");
+            }
+            else
+            {
+                warninglabel.Text = creation_result;
 
-                case "Account name already exists":
-                    warninglabel.Text = $"Account couldn't be created\nUser '{uname}' already exists";
+                logincontrols.Visible = true;
+                accountpopup.Visible = false;
 
-                    logincontrols.Visible = true;
-                    accountpopup.Visible = false;
-
-                    warninglabel.Visible = true;
-                    break;
-
-                default:
-                    warninglabel.Text = $"Something went wrong: {creation_result}";
-
-                    logincontrols.Visible = true;
-                    accountpopup.Visible = false;
-
-                    warninglabel.Visible = true;
-                    break;
+                warninglabel.Visible = true;
             }
         }
         

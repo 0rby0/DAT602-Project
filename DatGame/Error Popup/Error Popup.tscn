@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://c58wvuxlbr0lw"]
+
+[ext_resource type="Script" uid="uid://cr1l2ae3d07ff" path="res://Error Popup/popup_handler.cs" id="1_g1c54"]
+
+[node name="Error Popup" type="PopupPanel" unique_id=1496796612]
+oversampling_override = 1.0
+title = "Error"
+initial_position = 1
+size = Vector2i(200, 118)
+visible = true
+script = ExtResource("1_g1c54")
+
+[node name="Alignment" type="VBoxContainer" parent="." unique_id=395229333]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 196.0
+offset_bottom = 114.0
+alignment = 1
+
+[node name="lblMessage" type="Label" parent="Alignment" unique_id=2036843255]
+layout_mode = 2
+text = "Error: Error message"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="btnClose" type="Button" parent="Alignment" unique_id=1354473280]
+custom_minimum_size = Vector2(100, 0)
+custom_maximum_size = Vector2(100, -1)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Okay"
+
+[connection signal="pressed" from="Alignment/btnClose" to="." method="ClosePopup"]

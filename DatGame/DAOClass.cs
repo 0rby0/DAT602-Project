@@ -8,6 +8,8 @@ namespace DATGame
 	// Base class, creates the connection to the database
 	internal partial class DAOClass : Node
 	{
+		protected PackedScene popup = GD.Load<PackedScene>("res://Error Popup/Error Popup.tscn");
+
 	   protected MySqlConnection _connection;
 
 		public DAOClass()
@@ -64,10 +66,10 @@ namespace DATGame
 				return response;
 			}
 
-            catch (MySqlException e)
-            {
-                return $"Something went wrong: {e.Message}";
-            }
+			catch (Exception e)
+			{
+				return $"Something went wrong: {e.Message}";
+			}
 
 			finally
 			{
@@ -91,21 +93,25 @@ namespace DATGame
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
 					while (reader.Read())
-                    {
-                        response = reader.GetValue(0).ToString();
+					{
+						response = reader.GetValue(0).ToString();
 					}
 				}
 
 				return response;
-            }
+			}
 
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-                return "";
-            }
+			catch (Exception e)
+			{
+				Popup _popup = (Popup)popup.Instantiate();
+				popup_handler _conf = (popup_handler)_popup;
+				_conf.ErrorMessage = e.Message;
+				AddChild(_popup);
 
-            finally
+				return "";
+			}
+
+			finally
 			{
 				_connection.Close();
 			}
@@ -187,67 +193,70 @@ namespace DATGame
 
 				MySqlCommand command = new MySqlCommand($"CALL Delete_Account('{username}', 1);", _connection);
 				command.ExecuteNonQuery();
-            }
+			}
 
-            catch (MySqlException e)
+			catch (Exception e)
             {
-                GD.Print(e);
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            finally
+			finally
 			{
 				_connection.Close();
 			}
 		}
 
-        public Godot.Collections.Array GetAccounts()
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
+		public Godot.Collections.Array GetAccounts()
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
 
-            try
-            {
-                _connection.Open();
+			try
+			{
+				_connection.Open();
 
-                MySqlCommand command = new MySqlCommand("SELECT AccountName FROM `account`;", _connection);
+				MySqlCommand command = new MySqlCommand("SELECT AccountName FROM `account`;", _connection);
 
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary player = new Dictionary();
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary player = new Dictionary();
 
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is string vals)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vals);
-                            }
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is string vals)
+							{
+								player[reader.GetName(i)] = Variant.From(vals);
+							}
 
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
 
-                        }
+						}
 
-                        output.Add(player);
-                    }
-                }
-            }
+						output.Add(player);
+					}
+				}
+			}
 
-            finally
-            {
-                _connection.Close();
-            }
+			finally
+			{
+				_connection.Close();
+			}
 
-            return output;
-        }
+			return output;
+		}
 
-        public void UpdateAccount(string username, bool admin, bool locked)
-        {
-            try
-            {
-                _connection.Open();
+		public void UpdateAccount(string username, bool admin, bool locked)
+		{
+			try
+			{
+				_connection.Open();
 
 				int admini = 0;
 				int lockedi = 0;
@@ -262,22 +271,25 @@ namespace DATGame
 					lockedi = 1;
 				}
 
-                MySqlCommand command = new MySqlCommand($"CALL Update_Account('{username}', {admini}, {lockedi});", _connection);
-                command.ExecuteNonQuery();
-            }
+				MySqlCommand command = new MySqlCommand($"CALL Update_Account('{username}', {admini}, {lockedi});", _connection);
+				command.ExecuteNonQuery();
+			}
 
-            catch (MySqlException e)
+			catch (Exception e)
             {
-                GD.Print(e);
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            finally
-            {
-                _connection.Close();
-            }
-        }
+			finally
+			{
+				_connection.Close();
+			}
+		}
 
-    }
+	}
 
 	// Any database calls related to room management
 	internal partial class RoomDAO : DAOClass
@@ -309,100 +321,100 @@ namespace DATGame
 
 		public Dictionary GetRoomInfo(int room)
 		{
-            Dictionary output = new Dictionary();
+			Dictionary output = new Dictionary();
 
-            try
-            {
-                _connection.Open();
+			try
+			{
+				_connection.Open();
 
-                MySqlCommand command = new MySqlCommand($"CALL Get_Room({room});", _connection);
+				MySqlCommand command = new MySqlCommand($"CALL Get_Room({room});", _connection);
 
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali);
-                            }
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								output[reader.GetName(i)] = Variant.From(vali);
+							}
 
-                            else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali64);
-                            }
+							else if (reader.GetValue(i) is Int64 vali64)
+							{
+								output[reader.GetName(i)] = Variant.From(vali64);
+							}
 
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vals);
-                            }
+							else if (reader.GetValue(i) is string vals)
+							{
+								output[reader.GetName(i)] = Variant.From(vals);
+							}
 
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
 
-                        }
-                    }
-                }
-            }
+						}
+					}
+				}
+			}
 
-            finally
-            {
-                _connection.Close();
-            }
+			finally
+			{
+				_connection.Close();
+			}
 
-            return output;
-        }
+			return output;
+		}
 
 		public Dictionary GetRoom(string username)
 		{
 			Dictionary output = new Dictionary();
 
-            try
-            {
-                _connection.Open();
+			try
+			{
+				_connection.Open();
 
-                MySqlCommand command = new MySqlCommand($"CALL Get_Owned_Rooms('{username}');", _connection);
+				MySqlCommand command = new MySqlCommand($"CALL Get_Owned_Rooms('{username}');", _connection);
 
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
 					while (reader.Read())
 					{
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali);
-                            }
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								output[reader.GetName(i)] = Variant.From(vali);
+							}
 
-                            else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali64);
-                            }
+							else if (reader.GetValue(i) is Int64 vali64)
+							{
+								output[reader.GetName(i)] = Variant.From(vali64);
+							}
 
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vals);
-                            }
+							else if (reader.GetValue(i) is string vals)
+							{
+								output[reader.GetName(i)] = Variant.From(vals);
+							}
 
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
 
-                        }
-                    }
-                }
-            }
+						}
+					}
+				}
+			}
 
-            finally
-            {
-                _connection.Close();
-            }
+			finally
+			{
+				_connection.Close();
+			}
 
-            return output;
+			return output;
 		}
 
 		public Godot.Collections.Array GetRooms()
@@ -418,25 +430,25 @@ namespace DATGame
 				using (MySqlDataReader reader = command.ExecuteReader())
 				{
 					while (reader.Read())
-                    {
+					{
 						Dictionary room = new Dictionary();
 						
 						for (int i = 0; i < reader.FieldCount; i++)
 						{
 							if (reader.GetValue(i) is int vali)
-                            {
-                                room[reader.GetName(i)] = Variant.From(vali);
-                            }
+							{
+								room[reader.GetName(i)] = Variant.From(vali);
+							}
 
 							else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                room[reader.GetName(i)] = Variant.From(vali64);
-                            }
+							{
+								room[reader.GetName(i)] = Variant.From(vali64);
+							}
 
 							else if (reader.GetValue(i) is string vals)
-                            {
-                                room[reader.GetName(i)] = Variant.From(vals);
-                            }
+							{
+								room[reader.GetName(i)] = Variant.From(vals);
+							}
 
 							else
 							{
@@ -460,27 +472,30 @@ namespace DATGame
 
 		public void CreateRoom(string roomname, string accountname)
 		{
-            try
-            {
-                _connection.Open();
+			try
+			{
+				_connection.Open();
 
-                MySqlCommand command = new MySqlCommand($"CALL Create_Room('{roomname}', '{accountname}');", _connection);
+				MySqlCommand command = new MySqlCommand($"CALL Create_Room('{roomname}', '{accountname}');", _connection);
 
 				command.ExecuteNonQuery();
-            }
+			}
 
-            catch (MySqlException e)
+			catch (Exception e)
             {
-                GD.Print(e);
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            finally
-            {
-                _connection.Close();
-            }
-        }
+			finally
+			{
+				_connection.Close();
+			}
+		}
 
-        public void KillRoom(int roomid)
+		public void KillRoom(int roomid)
 		{
 			try
 			{
@@ -488,15 +503,18 @@ namespace DATGame
 
 				MySqlCommand command = new MySqlCommand($"CALL Kill_Room({roomid})", _connection);
 
-                command.ExecuteNonQuery();
-            }
+				command.ExecuteNonQuery();
+			}
 
-            catch (MySqlException e)
+			catch (Exception e)
             {
-                GD.Print(e);
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            finally
+			finally
 			{
 				_connection.Close();
 			}
@@ -507,273 +525,282 @@ namespace DATGame
 	// Any database calls that manage player entries
 	internal partial class PlayerDAO : DAOClass
 	{
-        public void Attack(int ability)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Attack({ability});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void ExitRoom(string account, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Exit_Room('{account}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public string GetPrimaryPlayer(int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Primary_Player({room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        return (string)reader.GetValue(0);
-                    }
-                }
-
-                return "";
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void SwapItems(string account, int room, int ? id1, int ? id2)
-        {
-            int id1i = -1;
-            int id2i = -1;
-
-            if (id1 is not null)
-            {
-                id1i = (int)id1;
-            }
-
-            if (id2 is not null)
-            {
-                id2i = (int)id2;
-            }
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Transfer_Abilities({id1i}, {id2i}, '{account}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void ReplenishEnergy(string username, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Replenish_Energy('{username}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public int GetEnergy(string username, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Player_Energy('{username}', {room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        return (int)reader.GetValue(0);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return 0;
-        }
-
-        public Godot.Collections.Array GetInventory(string account, int room)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Inventory('{account}', {room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary item = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                item[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else if (reader.GetValue(i) is UInt64 vali64)
-                            {
-                                switch (reader.GetValue(i))
-                                {
-                                    case (UInt64)0:
-                                        item[reader.GetName(i)] = Variant.From<bool>(false);
-                                        break;
-
-                                    case (UInt64)1:
-                                        item[reader.GetName(i)] = Variant.From<bool>(true);
-                                        break;
-
-                                    default:
-                                        UInt64 val = (UInt64)reader.GetValue(i);
-                                        item[reader.GetName(i)] = Variant.From<UInt64>(val);
-                                        break;
-                                }
-                            }
-
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                item[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-
-                        output.Add(item);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-        public void UpdatePlayer(string account, int room, int highscore, int currentscore)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Update_Player('{account}', {room}, {currentscore}, {highscore});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void DeletePlayer(string account, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Delete_Player('{account}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-        
-        public void Rejoin(string account, int room, int tile)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Rejoin_At('{tile}', '{account}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public string JoinGame(string account, int room, string classname)
+		public void Attack(int ability)
 		{
-            string output = "";
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Attack({ability});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void ExitRoom(string account, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Exit_Room('{account}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public string GetPrimaryPlayer(int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Primary_Player({room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						return (string)reader.GetValue(0);
+					}
+				}
+
+				return "";
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void SwapItems(string account, int room, int ? id1, int ? id2)
+		{
+			int id1i = -1;
+			int id2i = -1;
+
+			if (id1 is not null)
+			{
+				id1i = (int)id1;
+			}
+
+			if (id2 is not null)
+			{
+				id2i = (int)id2;
+			}
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Transfer_Abilities({id1i}, {id2i}, '{account}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			catch (Exception e)
+            {
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
+            }
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void ReplenishEnergy(string username, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Replenish_Energy('{username}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public int GetEnergy(string username, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Player_Energy('{username}', {room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						return (int)reader.GetValue(0);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return 0;
+		}
+
+		public Godot.Collections.Array GetInventory(string account, int room)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Inventory('{account}', {room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary item = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								item[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else if (reader.GetValue(i) is UInt64 vali64)
+							{
+								switch (reader.GetValue(i))
+								{
+									case (UInt64)0:
+										item[reader.GetName(i)] = Variant.From<bool>(false);
+										break;
+
+									case (UInt64)1:
+										item[reader.GetName(i)] = Variant.From<bool>(true);
+										break;
+
+									default:
+										UInt64 val = (UInt64)reader.GetValue(i);
+										item[reader.GetName(i)] = Variant.From<UInt64>(val);
+										break;
+								}
+							}
+
+							else if (reader.GetValue(i) is string vals)
+							{
+								item[reader.GetName(i)] = Variant.From(vals);
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+
+						output.Add(item);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+		public void UpdatePlayer(string account, int room, int highscore, int currentscore)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Update_Player('{account}', {room}, {currentscore}, {highscore});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			catch (Exception e)
+            {
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
+            }
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void DeletePlayer(string account, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Delete_Player('{account}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			catch (Exception e)
+            {
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
+            }
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+		
+		public void Rejoin(string account, int room, int tile)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Rejoin_At('{tile}', '{account}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public string JoinGame(string account, int room, string classname)
+		{
+			string output = "";
 
 			try
 			{
@@ -781,558 +808,564 @@ namespace DATGame
 
 				MySqlCommand command = new MySqlCommand($"CALL Join_Room('{account}', {room}, '{classname}');", _connection);
 
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        if (reader.GetValue(0) is string vals)
-                        {
-                            output = vals;
-                        }
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						if (reader.GetValue(0) is string vals)
+						{
+							output = vals;
+						}
 
-                        else
-                        {
-                            output = "returned non string";
-                        }
-                    }
-                }
+						else
+						{
+							output = "returned non string";
+						}
+					}
+				}
+			}
+
+			finally
+            {
+                _connection.Close();
             }
+
+			return output;
+		}
+
+		public Godot.Collections.Array GetPlayers()
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand("CALL Get_Players();", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary player = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								player[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else if (reader.GetValue(i) is Int64 vali64)
+							{
+								player[reader.GetName(i)] = Variant.From(vali64);
+							}
+
+							else if (reader.GetValue(i) is string vals)
+							{
+								player[reader.GetName(i)] = Variant.From(vals);
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+
+						output.Add(player);
+					}
+				}
+			}
 
 			finally
 			{
 				_connection.Close();
 			}
 
-            return output;
+			return output;
 		}
 
-        public Godot.Collections.Array GetPlayers()
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
+		public Dictionary GetPlayer(string account, int room)
+		{
+			Dictionary output = new Dictionary();
 
-            try
-            {
-                _connection.Open();
+			try
+			{
+				_connection.Open();
 
-                MySqlCommand command = new MySqlCommand("CALL Get_Players();", _connection);
+				MySqlCommand command = new MySqlCommand($"CALL Get_Player('{account}', {room});", _connection);
 
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary player = new Dictionary();
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								output[reader.GetName(i)] = Variant.From(vali);
+							}
 
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vali);
-                            }
+							else if (reader.GetValue(i) is Int64 vali64)
+							{
+								output[reader.GetName(i)] = Variant.From(vali64);
+							}
 
-                            else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vali64);
-                            }
+							else if (reader.GetValue(i) is string vals)
+							{
+								output[reader.GetName(i)] = Variant.From(vals);
+							}
 
-                            else if (reader.GetValue(i) is string vals)
-                            {
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+					}
+				}
+
+				MySqlCommand command2 = new MySqlCommand($"CALL Get_Statistics('{account}', {room});", _connection);
+
+				using (MySqlDataReader reader2 = command2.ExecuteReader())
+				{
+					while (reader2.Read())
+					{
+						output[Variant.From((string)reader2.GetValue(0))] = Variant.From((int)reader2.GetValue(1));
+					}
+				}
+
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+		public int GetPlayerScore(string account, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"SELECT Get_Score('{account}', {room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						return (int)reader.GetValue(0);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return 0;
+		}
+
+		public Godot.Collections.Array GetLeaderboard(int room)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Leaderboard({room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary player = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								player[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else if (reader.GetValue(i) is Int64 vali64)
+							{
+								player[reader.GetName(i)] = Variant.From(vali64);
+							}
+
+							else if (reader.GetValue(i) is string vals)
+							{
 								player[reader.GetName(i)] = Variant.From(vals);
-                            }
+							}
 
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
 
-                        }
+						}
 
-                        output.Add(player);
-                    }
-                }
-            }
+						output.Add(player);
+					}
+				}
+			}
 
-            finally
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+	}
+
+	// Any database calls invloving the map
+	internal partial class MapDAO : DAOClass
+	{
+		public Godot.Collections.Array GetAvailableTiles(int room)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Available_Tiles({room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary tile = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								tile[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+
+						output.Add(tile);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+		public void Glitch(int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Glitch_Ability({room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			catch (Exception e)
             {
-                _connection.Close();
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            return output;
-        }
+			finally
+			{
+				_connection.Close();
+			}
+		}
 
-        public Dictionary GetPlayer(string account, int room)
-        {
-            Dictionary output = new Dictionary();
+		public void Engage(string username, int room, int player)
+		{
+			try
+			{
+				_connection.Open();
 
-            try
+				MySqlCommand command = new MySqlCommand($"CALL Engage_Combat('{username}', {room}, {player});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void Disengage(string username, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Disengage_Combat('{username}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public void MovePlayer(string username, int room, int x, int y, int range, bool diagonal)
+		{
+			int idiagonal = 0;
+
+			if (diagonal == true)
+			{
+				idiagonal = 1;
+			}
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Move_Player('{username}', {room}, {x}, {y}, {range}, {idiagonal});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			catch (Exception e)
             {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Player('{account}', {room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vali64);
-                            }
-
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                output[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-                    }
-                }
-
-                MySqlCommand command2 = new MySqlCommand($"CALL Get_Statistics('{account}', {room});", _connection);
-
-                using (MySqlDataReader reader2 = command2.ExecuteReader())
-                {
-                    while (reader2.Read())
-                    {
-                        output[Variant.From((string)reader2.GetValue(0))] = Variant.From((int)reader2.GetValue(1));
-                    }
-                }
-
+                Popup _popup = (Popup)popup.Instantiate();
+                popup_handler _conf = (popup_handler)_popup;
+                _conf.ErrorMessage = e.Message;
+                AddChild(_popup);
             }
 
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-        public int GetPlayerScore(string account, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"SELECT Get_Score('{account}', {room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        return (int)reader.GetValue(0);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return 0;
-        }
-
-        public Godot.Collections.Array GetLeaderboard(int room)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Leaderboard({room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary player = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else if (reader.GetValue(i) is Int64 vali64)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vali64);
-                            }
-
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                player[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-
-                        output.Add(player);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-    }
-
-    // Any database calls invloving the map
-    internal partial class MapDAO : DAOClass
-    {
-        public Godot.Collections.Array GetAvailableTiles(int room)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Available_Tiles({room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary tile = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                tile[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-
-                        output.Add(tile);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-        public void Glitch(int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Glitch_Ability({room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void Engage(string username, int room, int player)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Engage_Combat('{username}', {room}, {player});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void Disengage(string username, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Disengage_Combat('{username}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public void MovePlayer(string username, int room, int x, int y, int range, bool diagonal)
-        {
-            int idiagonal = 0;
-
-            if (diagonal == true)
-            {
-                idiagonal = 1;
-            }
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Move_Player('{username}', {room}, {x}, {y}, {range}, {idiagonal});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            catch (MySqlException e)
-            {
-                GD.Print(e);
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-        public Godot.Collections.Array GetTileInventory(string username, int room, int xrange, int yrange)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Tile_Inventory('{username}', {room}, {xrange}, {yrange});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary ability = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                ability[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else if (reader.GetValue(i) is UInt64 vali64)
-                            {
-                                switch (reader.GetValue(i))
-                                {
-                                    case (UInt64)0:
-                                        ability[reader.GetName(i)] = Variant.From(false);
-                                        break;
-
-                                    case (UInt64)1:
-                                        ability[reader.GetName(i)] = Variant.From(true);
-                                        break;
-
-                                    default:
-                                        UInt64 val = (UInt64)reader.GetValue(i);
-                                        ability[reader.GetName(i)] = Variant.From(val);
-                                        break;
-                                }
-                            }
-
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                ability[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-
-                        output.Add(ability);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-        public Godot.Collections.Array GetMapSnapshot(string username, int room, int viewradius)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Map_Snapshot('{username}', {room}, {viewradius});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary tile = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is int vali)
-                            {
-                                tile[reader.GetName(i)] = Variant.From(vali);
-                            }
-
-                            else if (reader.GetValue(i) is UInt64 vali64)
-                            {
-                                switch (reader.GetValue(i))
-                                {
-                                    case (UInt64)0:
-                                        tile[reader.GetName(i)] = Variant.From(false);
-                                        break;
-
-                                    case (UInt64)1:
-                                        tile[reader.GetName(i)] = Variant.From(true);
-                                        break;
-
-                                    default:
-                                        UInt64 val = (UInt64)reader.GetValue(i);
-                                        tile[reader.GetName(i)] = Variant.From(val);
-                                        break;
-                                }
-                            }
-
-                            else if (reader.GetValue(i) is string vals)
-                            {
-                                tile[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else if (reader.GetValue(i) is DBNull valsn)
-                            {
-                                tile[reader.GetName(i)] = "";
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-                        }
-
-                        output.Add(tile);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-    }
-
-    // Any database calls involving the in game chat system
-    internal partial class ChatDAO : DAOClass
-    {
-        public Godot.Collections.Array GetMessages(int room)
-        {
-            Godot.Collections.Array output = new Godot.Collections.Array();
-
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Get_Messages({room});", _connection);
-
-                using (MySqlDataReader reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        Dictionary message = new Dictionary();
-
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.GetValue(i) is string vals)
-                            {
-                                message[reader.GetName(i)] = Variant.From(vals);
-                            }
-
-                            else
-                            {
-                                GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
-                            }
-
-                        }
-
-                        output.Add(message);
-                    }
-                }
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-
-            return output;
-        }
-
-        public void SendMessage(string message, string username, int room)
-        {
-            try
-            {
-                _connection.Open();
-
-                MySqlCommand command = new MySqlCommand($"CALL Send_Message('{message}', '{username}', {room});", _connection);
-
-                command.ExecuteNonQuery();
-            }
-
-            finally
-            {
-                _connection.Close();
-            }
-        }
-
-    }
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+		public Godot.Collections.Array GetTileInventory(string username, int room, int xrange, int yrange)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Tile_Inventory('{username}', {room}, {xrange}, {yrange});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary ability = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								ability[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else if (reader.GetValue(i) is UInt64 vali64)
+							{
+								switch (reader.GetValue(i))
+								{
+									case (UInt64)0:
+										ability[reader.GetName(i)] = Variant.From(false);
+										break;
+
+									case (UInt64)1:
+										ability[reader.GetName(i)] = Variant.From(true);
+										break;
+
+									default:
+										UInt64 val = (UInt64)reader.GetValue(i);
+										ability[reader.GetName(i)] = Variant.From(val);
+										break;
+								}
+							}
+
+							else if (reader.GetValue(i) is string vals)
+							{
+								ability[reader.GetName(i)] = Variant.From(vals);
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+
+						output.Add(ability);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+		public Godot.Collections.Array GetMapSnapshot(string username, int room, int viewradius)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Map_Snapshot('{username}', {room}, {viewradius});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary tile = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is int vali)
+							{
+								tile[reader.GetName(i)] = Variant.From(vali);
+							}
+
+							else if (reader.GetValue(i) is UInt64 vali64)
+							{
+								switch (reader.GetValue(i))
+								{
+									case (UInt64)0:
+										tile[reader.GetName(i)] = Variant.From(false);
+										break;
+
+									case (UInt64)1:
+										tile[reader.GetName(i)] = Variant.From(true);
+										break;
+
+									default:
+										UInt64 val = (UInt64)reader.GetValue(i);
+										tile[reader.GetName(i)] = Variant.From(val);
+										break;
+								}
+							}
+
+							else if (reader.GetValue(i) is string vals)
+							{
+								tile[reader.GetName(i)] = Variant.From(vals);
+							}
+
+							else if (reader.GetValue(i) is DBNull valsn)
+							{
+								tile[reader.GetName(i)] = "";
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+						}
+
+						output.Add(tile);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+	}
+
+	// Any database calls involving the in game chat system
+	internal partial class ChatDAO : DAOClass
+	{
+		public Godot.Collections.Array GetMessages(int room)
+		{
+			Godot.Collections.Array output = new Godot.Collections.Array();
+
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Get_Messages({room});", _connection);
+
+				using (MySqlDataReader reader = command.ExecuteReader())
+				{
+					while (reader.Read())
+					{
+						Dictionary message = new Dictionary();
+
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							if (reader.GetValue(i) is string vals)
+							{
+								message[reader.GetName(i)] = Variant.From(vals);
+							}
+
+							else
+							{
+								GD.Print($"Unrecognised data type for column: {reader.GetName(i)} | TYPE ({reader.GetValue(i).GetType()})");
+							}
+
+						}
+
+						output.Add(message);
+					}
+				}
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+
+			return output;
+		}
+
+		public void SendMessage(string message, string username, int room)
+		{
+			try
+			{
+				_connection.Open();
+
+				MySqlCommand command = new MySqlCommand($"CALL Send_Message('{message}', '{username}', {room});", _connection);
+
+				command.ExecuteNonQuery();
+			}
+
+			finally
+			{
+				_connection.Close();
+			}
+		}
+
+	}
 
 	// Any database calls to get system/base information
 	internal partial class GameDAO : DAOClass
@@ -1353,10 +1386,10 @@ namespace DATGame
 					{
 						Dictionary info = new Dictionary();
 
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            info[reader.GetName(i)] = Variant.From((string)reader.GetValue(i));
-                        }
+						for (int i = 0; i < reader.FieldCount; i++)
+						{
+							info[reader.GetName(i)] = Variant.From((string)reader.GetValue(i));
+						}
 
 						output.Add(info);
 					}

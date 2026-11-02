@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class popup_handler : PopupPanel
+public partial class popup_handler : Window
 {
     private string errorMessage;
 
@@ -8,7 +8,6 @@ public partial class popup_handler : PopupPanel
 
     public override void _Ready()
     {
-        Popup();
         GetNode<Label>("Alignment/lblMessage").Text = $"Error: {errorMessage}";
     }
 

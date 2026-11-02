@@ -2,14 +2,14 @@
 
 [ext_resource type="Script" uid="uid://cr1l2ae3d07ff" path="res://Error Popup/popup_handler.cs" id="1_g1c54"]
 
-[node name="Error Popup" type="PopupPanel" unique_id=1496796612]
-transparent_bg = false
+[node name="Window" type="Window" unique_id=1017644738]
 oversampling_override = 1.0
 title = "Error"
-initial_position = 1
-size = Vector2i(200, 118)
-visible = true
-transparent = false
+initial_position = 2
+size = Vector2i(210, 110)
+transient = true
+unresizable = true
+popup_window = true
 sharp_corners = true
 script = ExtResource("1_g1c54")
 
@@ -22,6 +22,7 @@ alignment = 1
 
 [node name="lblMessage" type="Label" parent="Alignment" unique_id=2036843255]
 layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Error: Error message"
 horizontal_alignment = 1
 vertical_alignment = 1

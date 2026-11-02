@@ -37,7 +37,7 @@ namespace DATGame
 
         public void ShowPopup(string error)
         {
-            PopupPanel _popup = (PopupPanel)popup.Instantiate();
+            Window _popup = (Window)popup.Instantiate();
             popup_handler _conf = (popup_handler)_popup;
             _conf.ErrorMessage = error;
             Main.get.AddChild(_popup);

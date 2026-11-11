@@ -4,3 +4,4 @@
 
 [node name="Main" type="Node" unique_id=1593058453]
 script = ExtResource("1_lxy7q")
+_runTests = true

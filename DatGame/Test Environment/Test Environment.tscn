@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://be828hbo2n12j"]
+
+[ext_resource type="Script" uid="uid://dk26e0h0yyeks" path="res://Test Environment/test_suite.cs" id="1_ofqyw"]
+
+[node name="Test Environment" type="Node" unique_id=2066040758]
+script = ExtResource("1_ofqyw")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=756454768]
+
+[node name="Rows" type="VBoxContainer" parent="CanvasLayer" unique_id=277922820]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 1270.0
+offset_bottom = 710.0
+
+[node name="lblTests" type="Label" parent="CanvasLayer/Rows" unique_id=2063891859]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 48
+text = "Running Tests"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="lblCurrentTest" type="Label" parent="CanvasLayer/Rows" unique_id=469705934]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 28
+text = "Current Test: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="btnNextTest" type="Button" parent="CanvasLayer/Rows" unique_id=1044265383]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 10
+theme_override_font_sizes/font_size = 32
+text = "Next"
+
+[connection signal="pressed" from="CanvasLayer/Rows/btnNextTest" to="." method="_NextTestClicked"]

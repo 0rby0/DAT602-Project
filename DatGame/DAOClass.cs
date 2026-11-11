@@ -1500,4 +1500,143 @@ namespace DATGame
 		}
 	}
 
+
+	// Debug DAO for calls which should only be called by the test suite
+	internal partial class DebugDAO : DAOClass
+    {
+        // Create a pseudo-singleton
+        public static DebugDAO global = new();
+
+		public void ResetDatabase()
+        {
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new("CALL Generate_Database()", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+		public void LayoutTiles(int room, int x, int y)
+		{
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Layout_Tiles({room}, {x}, {y})", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+		public void PlaceAbility(string ability, int tile)
+		{
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Place_Ability_On_Tile({ability}, {tile})", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+        public void DropAbility(int player, int abilityinstance)
+        {
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Drop_Ability({player}, {abilityinstance})", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+        public void UpdateScore(int player)
+        {
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Update_Score({player})", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+        public void DeleteAccount(string username, int confirm)
+        {
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Delete_Account('{username}', {confirm});", _connection);
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                ShowPopup(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+    }
+
 }

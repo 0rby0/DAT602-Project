@@ -35,9 +35,19 @@ namespace DATGame
 		public bool Itemselected { get => _itemselected; set => _itemselected = value; }
 		public int? Combatant { get => _combatant; set => _combatant = value; }
 
+		[Export]
+		private bool _runTests = false;
+
 		public override void _Ready()
 		{
-			SwitchScene("res://Login Page/Login.tscn");
+			if (_runTests)
+            {
+                SwitchScene("res://Test Environment/Test Environment.tscn");
+            }
+			else
+			{
+				SwitchScene("res://Login Page/Login.tscn");
+			}
 		}
 
 		public void SwitchScene(string scenepath)

@@ -19,6 +19,22 @@ BEGIN
     
 	START TRANSACTION;
 	
+    DROP TABLE IF EXISTS class_stat;
+    DROP TABLE IF EXISTS message;
+    DROP TABLE IF EXISTS statchange;
+    DROP TABLE IF EXISTS player_tile;
+    DROP TABLE IF EXISTS tile_ability;
+    DROP TABLE IF EXISTS tile;
+    DROP TABLE IF EXISTS player_ability;
+    DROP TABLE IF EXISTS player_stat;
+    DROP TABLE IF EXISTS stat;
+    DROP TABLE IF EXISTS player;
+    DROP TABLE IF EXISTS class;
+    DROP TABLE IF EXISTS abilityinstance;
+    DROP TABLE IF EXISTS ability;
+    DROP TABLE IF EXISTS room;
+    DROP TABLE IF EXISTS `account`;
+    
 	CREATE TABLE `account` (
 		AccountName VARCHAR(32),
 		`Password` VARCHAR(32) NOT NULL,

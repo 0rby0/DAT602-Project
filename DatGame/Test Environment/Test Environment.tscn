@@ -12,29 +12,12 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = 1270.0
 offset_bottom = 710.0
+alignment = 1
 
 [node name="lblTests" type="Label" parent="CanvasLayer/Rows" unique_id=2063891859]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 48
-text = "Running Tests"
+text = "Running Tests, Please Wait..."
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="lblCurrentTest" type="Label" parent="CanvasLayer/Rows" unique_id=469705934]
-layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 28
-text = "Current Test: 0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="btnNextTest" type="Button" parent="CanvasLayer/Rows" unique_id=1044265383]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 10
-theme_override_font_sizes/font_size = 32
-text = "Next"
-
-[connection signal="pressed" from="CanvasLayer/Rows/btnNextTest" to="." method="_NextTestClicked"]

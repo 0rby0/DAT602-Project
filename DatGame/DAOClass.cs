@@ -8,8 +8,6 @@ namespace DATGame
 	// Base class, creates the connection to the database
 	internal partial class DAOClass : Node
 	{
-		protected PackedScene popup = GD.Load<PackedScene>("res://Error Popup/Error Popup.tscn");
-
 	    static MySqlConnection _gconnection;
         protected MySqlConnection _connection;
 
@@ -35,12 +33,9 @@ namespace DATGame
 			}
 		}
 
-        public void ShowPopup(string error)
+        public void SendError(string error)
         {
-            Window _popup = (Window)popup.Instantiate();
-            popup_handler _conf = (popup_handler)_popup;
-            _conf.ErrorMessage = error;
-            Main.get.AddChild(_popup);
+            GD.Print($"Error: {error}");
         }
 
 	}
@@ -80,8 +75,10 @@ namespace DATGame
 			}
 
 			catch (Exception e)
-			{
-				return $"Something went wrong: {e.Message}";
+            {
+                SendError(e.Message);
+
+                return $"Something went wrong: {e.Message}";
 			}
 
 			finally
@@ -116,7 +113,7 @@ namespace DATGame
 
 			catch (Exception e)
 			{
-				ShowPopup(e.Message);
+				SendError(e.Message);
 
 				return "";
 			}
@@ -191,7 +188,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
 				return response;
             }
 
@@ -213,7 +210,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -257,7 +254,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -293,7 +290,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -327,7 +324,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -379,7 +376,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -431,7 +428,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -487,7 +484,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -511,7 +508,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -533,7 +530,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -563,7 +560,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -585,7 +582,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -613,7 +610,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
 
                 return "";
             }
@@ -650,7 +647,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -672,7 +669,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -698,7 +695,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -768,7 +765,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -792,7 +789,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -814,7 +811,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -836,7 +833,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -872,7 +869,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -928,7 +925,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -991,7 +988,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1019,7 +1016,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1075,7 +1072,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1128,7 +1125,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1152,7 +1149,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -1174,7 +1171,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1196,7 +1193,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1225,7 +1222,7 @@ namespace DATGame
 
 			catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
 			finally
@@ -1293,7 +1290,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1367,7 +1364,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1421,7 +1418,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1445,7 +1442,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1488,7 +1485,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1514,13 +1511,15 @@ namespace DATGame
                 _connection.Open();
 
                 MySqlCommand command = new("CALL Generate_Database()", _connection);
+                MySqlCommand command2 = new("CALL Create_Test_Data()", _connection);
 
                 command.ExecuteNonQuery();
+                command2.ExecuteNonQuery();
             }
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1542,7 +1541,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1557,14 +1556,14 @@ namespace DATGame
             {
                 _connection.Open();
 
-                MySqlCommand command = new($"CALL Place_Ability_On_Tile({ability}, {tile})", _connection);
+                MySqlCommand command = new($"CALL Place_Ability_On_Tile('{ability}', {tile})", _connection);
 
                 command.ExecuteNonQuery();
             }
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1586,7 +1585,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1608,7 +1607,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally
@@ -1629,7 +1628,7 @@ namespace DATGame
 
             catch (Exception e)
             {
-                ShowPopup(e.Message);
+                SendError(e.Message);
             }
 
             finally

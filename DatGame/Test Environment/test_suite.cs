@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Security.Principal;
 
 namespace DATGame
 {
@@ -8,139 +9,188 @@ namespace DATGame
     {
         private List<Action> _tests = new List<Action>();
         private int _currentTest = 0;
+        private List<string> _expectedResults = new List<string>();
 
         public override void _Ready()
         {
             // Initial Reset
             DebugDAO.global.ResetDatabase();
 
-            // Login Error: Account not found
+            // 1. Login Error: Account not found
             _tests.Add(() => UserDAO.global.Login("!!--!!NotAnAccount!!==!!", "123"));
+            _expectedResults.Add("Error: Account not found");
 
-            // Login Error: Login failed
+            // 2. Login Error: Login failed
             _tests.Add(() => UserDAO.global.Login("admin", "321"));
+            _expectedResults.Add("Error: Login failed");
 
+            // 3. Login Error: Account locked
             _tests.Add(LockTest);
+            _expectedResults.Add("Error: Account locked");
 
-            // Create Account Error: Account name already exists
+            // 4. Create Account Error: Account name already exists
             _tests.Add(() => UserDAO.global.CreateAccount("admin", "123"));
+            _expectedResults.Add("Error: Account name already exists");
 
-            // Create Room Error: Invalid account name
+            // 5. Create Room Error: Invalid account name
             _tests.Add(() => RoomDAO.global.CreateRoom("!--2mekwf8mmsss", "!!--!!NotAnAccount!!==!!"));
+            _expectedResults.Add("Error: Invalid account name");
 
-            // Layout Tiles Error: Room does not exist
-            _tests.Add(() => DebugDAO.global.LayoutTiles(4000000, 0, 0));
+            // 6. Layout Tiles Error: Room does not exist
+            _tests.Add(() => DebugDAO.global.LayoutTiles(4000000, 1, 0));
+            _expectedResults.Add("Error: Room does not exist");
 
-            // Ability Placement Error: Tile does not exist
+            // 7. Ability Placement Error: Tile does not exist
             _tests.Add(() => DebugDAO.global.PlaceAbility("Piston Wreck", 1999999999));
+            _expectedResults.Add("Error: Tile does not exist");
 
-            // Ability Placement Error: Ability does not exist
-            _tests.Add(() => DebugDAO.global.PlaceAbility("Not Ability", 0));
-
+            // 8. Move Player Error: Search radius too small
             _tests.Add(RadiusTest);
+            _expectedResults.Add("Error: Search radius too small");
 
-            // Move Player Error: Room not found
+            // 9. Ability Placement Error: Ability does not exist
+            _tests.Add(() => DebugDAO.global.PlaceAbility("Not Ability", 401));
+            _expectedResults.Add("Error: Ability does not exist");
+
+            // 10. Move Player Error: Room not found
             _tests.Add(() => MapDAO.global.MovePlayer("admin", room: 10, x: 0, y: 1, range: 1, diagonal: true));
+            _expectedResults.Add("Error: Room not found");
 
-            // Move Player Error: Account not found
-            _tests.Add(() => MapDAO.global.MovePlayer("!!_-dsaasdss", room: 0, x: 0, y: 1, range: 1, diagonal: true));
+            // 11. Move Player Error: Account not found
+            _tests.Add(() => MapDAO.global.MovePlayer("!!_-dsaasdss", room: 2, x: 0, y: 1, range: 1, diagonal: true));
+            _expectedResults.Add("Error: Account not found");
 
+            // 12. Move Player Error: Tile already occupied
             _tests.Add(OccupationTest);
+            _expectedResults.Add("Error: Tile already occupied");
 
-            // Move Player Error: Diagonal movement on non-diagonal check
-            _tests.Add(() => MapDAO.global.MovePlayer("admin", room: 0, x: 1, y: 1, range: 1, diagonal: false));
+            // 13. Move Player Error: Diagonal movement on non-diagonal check
+            _tests.Add(() => MapDAO.global.MovePlayer("admin", room: 2, x: 1, y: 1, range: 1, diagonal: false));
+            _expectedResults.Add("Error: Diagonal movement on non-diagonal check");
 
-            // Move Player Error: Tile out of range
-            _tests.Add(() => MapDAO.global.MovePlayer("admin", room: 0, x: 2, y: 0, range: 1, diagonal: true));
+            // 14. Move Player Error: Tile out of range
+            _tests.Add(() => MapDAO.global.MovePlayer("admin", room: 2, x: 2, y: 0, range: 1, diagonal: true));
+            _expectedResults.Add("Error: Tile out of range");
 
-            // Glitch Ability Error: Room does not exist
+            // 15. Glitch Ability Error: Room does not exist
             _tests.Add(() => MapDAO.global.Glitch(room: 4000));
+            _expectedResults.Add("Error: Room does not exist");
 
-            // Item Transfer Error: One or both ability instances not found
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 0, id1: 40, id2: 32));
+            // 16. Item Transfer Error: One or both ability instances not found
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: null, id2: null));
+            _expectedResults.Add("Error: One or both ability instances not found");
 
-            // Item Transfer Error: Account not found
-            _tests.Add(() => PlayerDAO.global.SwapItems("!!kdofk9", room: 0, id1: null, id2: null));
+            // 17. Item Transfer Error: Account not found
+            _tests.Add(() => PlayerDAO.global.SwapItems("!!kdofk9", room: 2, id1: 40, id2: 32));
+            _expectedResults.Add("Error: Account not found");
 
-            // Item Transfer Error: Room not found
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 590, id1: null, id2: null));
+            // 18. Item Transfer Error: Room not found
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 590, id1: 40, id2: 32));
+            _expectedResults.Add("Error: Room not found");
 
-            // Item Transfer Error: No abilities to swap
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 0, id1: null, id2: null));
+            // 19. Item Transfer Error: No abilities to swap
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: 32, id2: 32));
+            _expectedResults.Add("Error: No abilities to swap");
 
-            // Pickup Error: Invalid player
-            _tests.Add(() => PlayerDAO.global.SwapItems("!--3fdsfa", room: 0, id1: null, id2: null));
+            // 20. Pickup Error: Invalid player
+            _tests.Add(() => PlayerDAO.global.SwapItems("!--3fdsfa", room: 2, id1: 40, id2: 32));
+            _expectedResults.Add("Error: Invalid player");
 
-            // Pickup Error: Invalid ability instance
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 0, id1: null, id2: 50));
+            // 21. Pickup Error: Invalid ability instance
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: 40, id2: 50));
+            _expectedResults.Add("Error: Invalid ability instance");
 
-            // Drop Error: Invalid player
+            // 22. Drop Error: Invalid player
             _tests.Add(() => DebugDAO.global.DropAbility(9090, 1));
+            _expectedResults.Add("Error: Invalid player");
 
-            // Drop Error: Invalid ability instance
-            _tests.Add(() => DebugDAO.global.DropAbility(1, 9090));
+            // 23. Drop Error: Invalid ability instance
+            _tests.Add(() => DebugDAO.global.DropAbility(2, 9090));
+            _expectedResults.Add("Error: Invalid ability instance");
 
-            // Drop Error: Player is not holding that ability
-            _tests.Add(() => DebugDAO.global.DropAbility(1, 1));
+            // 24. Drop Error: Player is not holding that ability
+            _tests.Add(() => DebugDAO.global.DropAbility(2, 1));
+            _expectedResults.Add("Error: Player is not holding that ability");
 
-            // Score Update Error: Invalid player id
+            // 25. Score Update Error: Invalid player id
             _tests.Add(() => DebugDAO.global.UpdateScore(696969));
+            _expectedResults.Add("Error: Invalid player id");
 
-            // Kill Room Error: Room does not exist
+            // 26. Kill Room Error: Room does not exist
             _tests.Add(() => RoomDAO.global.KillRoom(67073));
+            _expectedResults.Add("Error: Room does not exist");
 
-            // Account Update Error: Account does not exist
+            // 27. Account Update Error: Account does not exist
             _tests.Add(() => UserDAO.global.UpdateAccount("&&&hndekfvuysdu", admin: true, locked: false));
+            _expectedResults.Add("Error: Account does not exist");
 
-            // Account Deletion Error: Account deletion cancelled
+            // 28. Account Deletion Error: Account deletion cancelled
             _tests.Add(() => DebugDAO.global.DeleteAccount("admin", 0));
+            _expectedResults.Add("Error: Account deletion cancelled");
 
-            // Account Deletion Error: Account does not exist
+            // 29. Account Deletion Error: Account does not exist
             _tests.Add(() => DebugDAO.global.DeleteAccount("^undkfi", 1));
+            _expectedResults.Add("Error: Account does not exist");
 
-            // Player Update Error: Player does not exist
-            _tests.Add(() => PlayerDAO.global.UpdatePlayer("V", room: 0, highscore: 100, currentscore: 34));
+            // 30. Player Update Error: Player does not exist
+            _tests.Add(() => PlayerDAO.global.UpdatePlayer("V", room: 2, highscore: 100, currentscore: 34));
+            _expectedResults.Add("Error: Player does not exist");
 
-            // Player Deletion Error: Account not found
-            _tests.Add(() => PlayerDAO.global.DeletePlayer("$4fedsf", 0));
+            // 31. Player Deletion Error: Account not found
+            _tests.Add(() => PlayerDAO.global.DeletePlayer("$4fedsf", 2));
+            _expectedResults.Add("Error: Account not found");
 
-            // Player Deletion Error: Room not found
+            // 32. Player Deletion Error: Room not found
             _tests.Add(() => PlayerDAO.global.DeletePlayer("admin", 23));
+            _expectedResults.Add("Error: Room not found");
         }
 
-        public void _NextTestClicked()
+        public override void _Process(double delta)
         {
             if (_currentTest < _tests.Count)
             {
+                GD.Print("\n----\n");
+                GD.Print($"Running Test {_currentTest + 1}/{_tests.Count}");
+                GD.Print("Actual Result:");
                 _tests[_currentTest]();
+                GD.Print($"Expected Result:\n{_expectedResults[_currentTest]}");
+                _currentTest++;
             }
-
-            _currentTest++;
-            GetNode<Label>("CanvasLayer/Rows/lblCurrentTest").Text = $"Current Test: {_currentTest}";
+            else
+            {
+                GetNode<Label>("CanvasLayer/Rows/lblTests").Text = "Tests Complete, Check the Console for Results";
+            }
         }
 
         public void LockTest()
         {
-            // Login Error: Account locked
             UserDAO.global.UpdateAccount(username: "admin", admin: true, locked: true);
-            UserDAO.global.Login("admin", "123");
+            UserDAO.global.Login("admin", "admin123");
             UserDAO.global.UpdateAccount(username: "admin", admin: true, locked: false);
         }
 
         public void RadiusTest()
         {
-            // Move Player Error: Search radius too small
             RoomDAO.global.CreateRoom("!!--TestRoom!!==!!", "admin");
-            PlayerDAO.global.JoinGame("admin", room: 0, "Gorilla");
-            MapDAO.global.MovePlayer("admin", room: 0, x: 0, y: 1, range: 0, diagonal: false);
+            PlayerDAO.global.JoinGame("admin", room: 2, "Gorilla");
+            MapDAO.global.MovePlayer("admin", room: 2, x: 0, y: 1, range: 0, diagonal: false);
         }
 
         public void OccupationTest()
         {
-            // Move Player Error: Tile already occupied
-            PlayerDAO.global.JoinGame("Ghostie", room: 0, "Eagle");
-            MapDAO.global.MovePlayer("Ghostie", room: 0, x: 0, y: 1, range: 1, diagonal: true);
-            MapDAO.global.MovePlayer("admin", room: 0, x: 0, y: 1, range: 1, diagonal: true);
+            PlayerDAO.global.JoinGame("Ghostie", room: 2, "Eagle");
+            MapDAO.global.MovePlayer("Ghostie", room: 2, x: 0, y: 1, range: 1, diagonal: true);
+            MapDAO.global.MovePlayer("admin", room: 2, x: 0, y: 1, range: 1, diagonal: true);
+        }
+
+        public override void _Notification(int what)
+        {
+            if (what == NotificationWMCloseRequest)
+            {
+                // Reset the database before closing
+                DebugDAO.global.ResetDatabase();
+                GetTree().Quit();
+            }
         }
 
     }

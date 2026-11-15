@@ -1025,6 +1025,11 @@ BEGIN
 
 	CASE
     
+		-- Error: If both abilities are null
+        WHEN Item1 = -1 AND Item2 = -1 THEN
+			SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'No abilities to swap';
+    
 		-- Error: If one of the requested ability instances doen't exist
 		WHEN NOT EXISTS (SELECT * FROM abilityinstance WHERE AbilityID = Item1 OR AbilityID = Item2) THEN
 			SIGNAL SQLSTATE '45000'
@@ -1046,27 +1051,18 @@ BEGIN
 		
 			-- If the first ability is null
 			IF Item1 = -1 THEN
-			
-				-- Error: If both abilities are null
-				IF Item2 = -1 THEN
-					SIGNAL SQLSTATE '45000'
-						SET MESSAGE_TEXT = 'No abilities to swap';
+				-- If the second given ability is in the player's inventory
+				IF EXISTS (SELECT * FROM player_ability WHERE AbilityID = Item2 AND Dropped IS NULL) THEN
+					CALL Drop_Ability(@player, Item2);
+					SELECT 'First selection was null, second was in player inventory' AS message;
+					COMMIT;
 					
-				ELSE
-					-- If the second given ability is in the player's inventory
-					IF EXISTS (SELECT * FROM player_ability WHERE AbilityID = Item2 AND Dropped IS NULL) THEN
-						CALL Drop_Ability(@player, Item2);
-						SELECT 'First selection was null, second was in player inventory' AS message;
-                        COMMIT;
-						
-					-- If the first ability is on a tile
-					ELSEIF EXISTS (SELECT * FROM tile_ability WHERE AbilityID = Item2 AND Removed IS NULL) THEN
-						CALL Pickup_Ability(@player, Item2);  
-						SELECT 'First selection was null, second was in tile inventory' AS message;
-                        COMMIT;
-					
-					END IF;
-					
+				-- If the first ability is on a tile
+				ELSEIF EXISTS (SELECT * FROM tile_ability WHERE AbilityID = Item2 AND Removed IS NULL) THEN
+					CALL Pickup_Ability(@player, Item2);  
+					SELECT 'First selection was null, second was in tile inventory' AS message;
+					COMMIT;
+				
 				END IF;
 			
 			-- If only the second ability is null

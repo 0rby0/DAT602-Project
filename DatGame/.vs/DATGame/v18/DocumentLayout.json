@@ -5,6 +5,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{711F3FF0-1DEB-4209-9E08-FE17DF1E52E1}|DATGame.csproj|c:\\users\\dyfry\\workspace\\2026\\dat602-project\\datgame\\test environment\\test_suite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{711F3FF0-1DEB-4209-9E08-FE17DF1E52E1}|DATGame.csproj|solutionrelative:test environment\\test_suite.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{711F3FF0-1DEB-4209-9E08-FE17DF1E52E1}|DATGame.csproj|c:\\users\\dyfry\\workspace\\2026\\dat602-project\\datgame\\daoclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{711F3FF0-1DEB-4209-9E08-FE17DF1E52E1}|DATGame.csproj|solutionrelative:daoclass.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -52,9 +56,23 @@
               "RelativeDocumentMoniker": "Test Environment\\test_suite.cs",
               "ToolTip": "C:\\Users\\dyfry\\workspace\\2026\\DAT602-Project\\DatGame\\Test Environment\\test_suite.cs",
               "RelativeToolTip": "Test Environment\\test_suite.cs",
-              "ViewState": "AgIAAEoAAAAAAAAAAAAgwF4AAAAvAAAAAAAAAA==",
+              "ViewState": "AgIAADcAAAAAAAAAAAAkwE8AAABeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-11-10T22:11:26.664Z",
+              "EditorCaption": "",
+              "OwnerCaption": "%2"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "DAOClass.cs",
+              "DocumentMoniker": "C:\\Users\\dyfry\\workspace\\2026\\DAT602-Project\\DatGame\\DAOClass.cs",
+              "RelativeDocumentMoniker": "DAOClass.cs",
+              "ToolTip": "C:\\Users\\dyfry\\workspace\\2026\\DAT602-Project\\DatGame\\DAOClass.cs",
+              "RelativeToolTip": "DAOClass.cs",
+              "ViewState": "AgIAAGUCAAAAAAAAAAAAwG8CAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-15T21:59:22.673Z",
               "EditorCaption": "",
               "OwnerCaption": "%2"
             }

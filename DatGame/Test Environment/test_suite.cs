@@ -77,7 +77,7 @@ namespace DATGame
             _expectedResults.Add("Error: Room does not exist");
 
             // 16. Item Transfer Error: One or both ability instances not found
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: null, id2: null));
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: 9999, id2: 6954));
             _expectedResults.Add("Error: One or both ability instances not found");
 
             // 17. Item Transfer Error: Account not found
@@ -89,15 +89,15 @@ namespace DATGame
             _expectedResults.Add("Error: Room not found");
 
             // 19. Item Transfer Error: No abilities to swap
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: 32, id2: 32));
+            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: null, id2: null));
             _expectedResults.Add("Error: No abilities to swap");
 
             // 20. Pickup Error: Invalid player
-            _tests.Add(() => PlayerDAO.global.SwapItems("!--3fdsfa", room: 2, id1: 40, id2: 32));
+            _tests.Add(() => DebugDAO.global.PickupAbility(player: 3040, abilityinstance: 1));
             _expectedResults.Add("Error: Invalid player");
 
             // 21. Pickup Error: Invalid ability instance
-            _tests.Add(() => PlayerDAO.global.SwapItems("admin", room: 2, id1: 40, id2: 50));
+            _tests.Add(() => DebugDAO.global.PickupAbility(player: 2, abilityinstance: 5006));
             _expectedResults.Add("Error: Invalid ability instance");
 
             // 22. Drop Error: Invalid player

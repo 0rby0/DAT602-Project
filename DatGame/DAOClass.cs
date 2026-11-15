@@ -1572,6 +1572,28 @@ namespace DATGame
             }
         }
 
+        public void PickupAbility(int player, int abilityinstance)
+        {
+            try
+            {
+                _connection.Open();
+
+                MySqlCommand command = new($"CALL Pickup_Ability({player}, {abilityinstance})", _connection);
+
+                command.ExecuteNonQuery();
+            }
+
+            catch (Exception e)
+            {
+                SendError(e.Message);
+            }
+
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
         public void DropAbility(int player, int abilityinstance)
         {
             try
